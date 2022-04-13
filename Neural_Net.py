@@ -9,7 +9,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 import seaborn as sns
 import Data_Handler as dh
 
-df = dh.df
+df = dh.data_cleaning()
 X = df.drop(['Darlehen - Vertragsstatus'], axis=1).values
 y = df['Darlehen - Vertragsstatus'].values
 

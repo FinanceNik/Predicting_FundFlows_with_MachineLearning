@@ -3,14 +3,14 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 import Data_Handler as dh
 
-data = dh.df
+data = dh.data_cleaning()
 
 # target
-y = data['Darlehen - Vertragsstatus']
+y = data['period_change_value']
 
 
 # load X variables into a pd df with columns
-X = data.drop(['Darlehen - Vertragsstatus'], axis=1)
+X = data.drop(['period_change_value'], axis=1)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=10)
 
