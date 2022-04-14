@@ -6,6 +6,9 @@ from keras import Sequential
 from keras.layers import LSTM
 from keras.layers import Dense, Dropout
 
+data = pd.read_csv('data/test_data.csv')
+print(data['Monthly Gross Return \n2000-06 \nBase \nCurrency'])
+
 
 def neural_net():
     data_file = 'data/MutualFund prices - A-E.csv'
@@ -18,13 +21,13 @@ def neural_net():
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled_data = scaler.fit_transform(data[predictor].values.reshape(-1, 1))
 
-    prediction_days = 60
+    prediction_period = 60
 
     x_train = []
     y_train = []
 
-    for x in range(prediction_days, len(scaled_data)):
-        x_train.append(scaled_data[x-prediction_days:x, 0])
+    for x in range(prediction_period, len(scaled_data)):
+        x_train.append(scaled_data[x-prediction_period:x, 0])
         y_train.append(scaled_data[x, 0])
 
     x_train, y_train = np.array(x_train), np.array(y_train)
@@ -51,14 +54,14 @@ def neural_net():
 
     total_dataset = pd.concat((data[predictor], test_data[predictor]))
 
-    model_inputs = total_dataset[len(total_dataset) - len(test_data) - prediction_days:].values
+    model_inputs = total_dataset[len(total_dataset) - len(test_data) - prediction_period:].values
     model_inputs = model_inputs.reshape(-1, 1)
     model_inputs = scaler.transform(model_inputs)
 
     x_test = []
 
-    for x in range(prediction_days, len(model_inputs)):
-        x_test.append(model_inputs[x-prediction_days:x, 0])
+    for x in range(prediction_period, len(model_inputs)):
+        x_test.append(model_inputs[x-prediction_period:x, 0])
 
     x_test = np.array(x_test)
     x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
@@ -71,9 +74,9 @@ def neural_net():
     plt.legend()
     plt.show()
 
-    ''' Predicting the Next Day'''
+    ''' Predicting the Next Period'''
 
-    real_data = [model_inputs[len(model_inputs) + 0 - prediction_days:len(model_inputs + 1), 0]]
+    real_data = [model_inputs[len(model_inputs) + 0 - prediction_period:len(model_inputs + 1), 0]]
     real_data = np.array(real_data)
     real_data = np.reshape(real_data, (real_data.shape[0], real_data.shape[1], 1))
 
@@ -81,7 +84,7 @@ def neural_net():
     prediction = scaler.inverse_transform(prediction)
     print(prediction)
 
-
-neural_net()
+#
+# neural_net()
 
 
