@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
+import os
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
@@ -19,55 +20,95 @@ def dataset_combiner():
     print(len(completed_dataset.index))
 
 
-def dataset_cleaner():
+# After going through the data with df.describe(), I was able to see that some columns did not have any data in them.
+# These columns can thus be dropped in order to create a more sensible, cleaner dataset.
+def usable_dataset_cleaner():
+
+    # Load the raw dataset directly combined off of Morningstar.
     df = pd.read_csv('data/Morningstar_data_version_1.1.csv')
-    df = df.drop(['Unnamed: 0'], axis=1)
 
-    # --> First I have to clean up the columns, 600 is way too much to visualize.
-    # sns.heatmap(df.isnull(), yticklabels=False, cbar=False, cmap='viridis')
-    # plt.show()
-    # print(df.describe())
+    # The following variables had to be dropped:
+    # --> Unnamed: 0 --> Was the index column created by Morningstar when downloading the data. Do not want to use it.
+    # --> Alpha 1 Yr... --> After talking to Moreno, he said not to use the Alpha off Morningstar. Downloaded only for
+    # testing purposes but should not be included in any analysis.
+    # --> Public --> Did not have any information in it.
+    # --> Number of Shareholders --> Did not have any information in it.
+    # --> Total Expense Ratio --> Did not have any information in it.
+    # --> Net Expense Ratio --> Only has one data-point in it.
+    df = df.drop(['Unnamed: 0',
+                  'Alpha 1 Yr (Gross Return)(Qtr-End)',
+                  'Public',
+                  'Number of Shareholders',
+                  'Net Expense \nRatio',
+                  'Total Expense Ratio'], axis=1)
 
+    # The following list of variables had to be dropped additionally:
+    # --> All 'Annual Report Management Expense Ratio (MER) Year XY --> Did not have any information in it.
+    df.drop(list(df.filter(regex='MER')), axis=1, inplace=True)
 
-dataset_cleaner()
+    # After further inspection of the data I have realized that the number are not properly formatted natively when
+    # exporting the data off of Morningstar. Numerical Values > 999 are delimited by '. This character thus has to
+    # be removed.
+    df = df.replace('’', '', regex=True)
 
-
-#######################################################################################################
-# --> Functions below are only for testing purposes and do not contribute to the final analysis.
-#######################################################################################################
-
-
-def data_cleaning():
-    df = pd.read_csv('data/MutualFund prices - A-E.csv')
-    df['price_date'] = pd.to_datetime(df['price_date'], format="%Y-%m-%d")
-
-    df = df.loc[(df['fund_symbol'] == 'AAAAX')]
-    df.insert(3, 'period_change_value', '')
-    df['period_change_value'] = df['nav_per_share'].pct_change()
-    df.insert(4, 'period_change_positive', '')
-
-    def period_change_calculator(x):
-        if x >= 0.0:
-            return 1
-        else:
-            return 0
-
-    df['period_change_positive'] = df['period_change_value'].apply(period_change_calculator)
-    df.insert(5, 'net_fund_flow', '')
-    df['net_fund_flow'] = df['nav_per_share'].diff(periods=1)
-    df = df.drop(['fund_symbol'], axis=1)
-    df = df.drop(['period_change_value'], axis=1)
-    df = df.drop(['period_change_positive'], axis=1)
-    df = df.set_index('price_date')
-    df = df.fillna(0)
-
-    return df
+    # And this is the adjusted raw dataset, exported as .csv for further analysis.
+    df.to_csv('data/Morningstar_data_version_1.1_filtered.csv')
 
 
-def data_filtering():
-    df = pd.read_csv('data/AAPL.csv')
-    df = df.set_index('Date')
-    return df
+def raw_data_description():
+    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
+    description = df.describe(percentiles=[]).transpose().round(4)
+    # description.to_csv('raw_data_describe.csv')
+    print(df.info())
+    print('\n')
+    print(description)
 
 
-# data_filtering()
+def time_series_data_description():
+    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='IPO')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='P/E')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Net Assets')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='#')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Average')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Manager')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Female')), axis=1, inplace=True)
+
+    description = df.describe(percentiles=[]).transpose().round(4)
+    print(description)
+
+
+# time_series_data_description()
+
+
+def fund_characteristics_data_description():
+    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
+    df.drop(list(df.filter(regex='Annual Report Net Expense Ratio')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Monthly Gross Return')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Estimated Share Class Net Flow')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+
+    description = df.describe(percentiles=[]).transpose().round(4)
+    print(description)
+
+
+# fund_characteristics_data_description()
+
+
+def data_description():
+    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
+    print(df.info())
+    # print(df.columns[:])
+
+    # --> Create a function that describes the fund characteristics. How much data is missing? Visualize that!
+    # df.drop([all fund flows, return and other time series variables.], axis=1)
+
+    # --> Create a function with df.describe() && df.info() so that the reader of the thesis can have a look
+    # at the data in its meta form.
+
+    # --> Decide on which columns / characteristics to drop based on the amount of missing information!
+    # ----> Or interpolate the data with average / mean / null / -9999 values?
+
+
+
