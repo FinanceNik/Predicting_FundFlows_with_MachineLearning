@@ -3,14 +3,16 @@ import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 import os
+import random
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
 
+# As the version of Morningstar does not allow for the export of the whole dataset at once, it has to be combined.
 def dataset_combiner():
     completed_dataset = []
     path = '/home/thequant/Downloads/'
-    for i in range(1,8):
+    for i in range(1, 8):
         filename = f'version_1.1_part_{i}.csv'
         df = pd.read_csv(path+filename)
         completed_dataset.append(df)
@@ -55,6 +57,56 @@ def usable_dataset_cleaner():
     df.to_csv('data/Morningstar_data_version_1.1_filtered.csv')
 
 
+# This function convert all the non-numerical values to numerical ones with the only exception being the fund's name.
+# This is to be done in order for ML algorithms to work on the data. They typically do not take text-based data.
+# The exception to the fund name is chosen as the name can be used as an index later and thus does not conflict with
+# quantitative models.
+def convert_categorical_data():
+    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
+
+    def conversion_firmCity():
+        unique_cities_df = df.drop_duplicates(subset=['Firm City'])
+        unique_cities = unique_cities_df['Firm City'].to_list()
+        unique_city_id = random.sample(range(1_000, 50_000), len(unique_cities))
+        ID_dict = dict(zip(unique_cities, unique_city_id))
+        df['Firm City ID'] = df['Firm City'].map(ID_dict)
+        return df
+
+    def conversion_fund_firm():
+        df_new = conversion_firmCity()
+        unique_fundFirms_df = df_new.drop_duplicates(subset=['Management Company'])
+        unique_fundFirms = unique_fundFirms_df['Management Company'].to_list()
+        unique_fundFirms_id = random.sample(range(1_000, 50_000), len(unique_fundFirms))
+        ID_dict = dict(zip(unique_fundFirms, unique_fundFirms_id))
+        df['Management Company ID'] = df['Management Company'].map(ID_dict)
+        return df
+
+    def conversion_investment_area():
+        df_new = conversion_fund_firm()
+        unique_investmentArea_df = df_new.drop_duplicates(subset=['Investment Area'])
+        unique_investmentArea = unique_investmentArea_df['Investment Area'].to_list()
+        unique_investmentArea_id = random.sample(range(1_000, 50_000), len(unique_investmentArea))
+        ID_dict = dict(zip(unique_investmentArea, unique_investmentArea_id))
+        df['Investment Area ID'] = df['Investment Area'].map(ID_dict)
+        return df
+
+    def conversion_Morningstar_Category():
+        df_new = conversion_investment_area()
+        unique_investmentArea_df = df_new.drop_duplicates(subset=['Morningstar Category'])
+        unique_investmentArea = unique_investmentArea_df['Morningstar Category'].to_list()
+        unique_investmentArea_id = random.sample(range(1_000, 50_000), len(unique_investmentArea))
+        ID_dict = dict(zip(unique_investmentArea, unique_investmentArea_id))
+        df['Morningstar Category ID'] = df['Morningstar Category'].map(ID_dict)
+        return df
+
+    df_numerical_only = conversion_Morningstar_Category()
+    df_numerical_only = df_numerical_only.drop(['Firm City',
+                                                'Management Company',
+                                                'Investment Area',
+                                                'Morningstar Category'], axis=1)
+    df_numerical_only.to_csv('data/Morningstar_data_version_1.1_filtered_numOnly.csv')
+
+
 def raw_data_description():
     df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
     description = df.describe(percentiles=[]).transpose().round(4)
@@ -74,41 +126,37 @@ def time_series_data_description():
     df.drop(list(df.filter(regex='Average')), axis=1, inplace=True)
     df.drop(list(df.filter(regex='Manager')), axis=1, inplace=True)
     df.drop(list(df.filter(regex='Female')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Firm City ID')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Management Company ID')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Investment Area ID')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='Morningstar Category')), axis=1, inplace=True)
 
     description = df.describe(percentiles=[]).transpose().round(4)
-    print(description)
-
-
-# time_series_data_description()
+    description.to_csv('time_series_data_describe.csv')
 
 
 def fund_characteristics_data_description():
-    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
+    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered_numOnly.csv')
     df.drop(list(df.filter(regex='Annual Report Net Expense Ratio')), axis=1, inplace=True)
     df.drop(list(df.filter(regex='Monthly Gross Return')), axis=1, inplace=True)
     df.drop(list(df.filter(regex='Estimated Share Class Net Flow')), axis=1, inplace=True)
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
     description = df.describe(percentiles=[]).transpose().round(4)
-    print(description)
+    description.to_csv('fund_characteristics_data_describe.csv')
 
 
-# fund_characteristics_data_description()
+########################################################################
+# NOTES:
 
+# --> Create a function that describes the fund characteristics. How much data is missing? Visualize that!
+# df.drop([all fund flows, return and other time series variables.], axis=1)
 
-def data_description():
-    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
-    print(df.info())
-    # print(df.columns[:])
+# --> Create a function with df.describe() && df.info() so that the reader of the thesis can have a look
+# at the data in its meta form.
 
-    # --> Create a function that describes the fund characteristics. How much data is missing? Visualize that!
-    # df.drop([all fund flows, return and other time series variables.], axis=1)
-
-    # --> Create a function with df.describe() && df.info() so that the reader of the thesis can have a look
-    # at the data in its meta form.
-
-    # --> Decide on which columns / characteristics to drop based on the amount of missing information!
-    # ----> Or interpolate the data with average / mean / null / -9999 values?
+# --> Decide on which columns / characteristics to drop based on the amount of missing information!
+# ----> Or interpolate the data with average / mean / null / -9999 values?
 
 
 
