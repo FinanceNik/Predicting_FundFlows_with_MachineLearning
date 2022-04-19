@@ -146,6 +146,35 @@ def fund_characteristics_data_description():
     description.to_csv('fund_characteristics_data_describe.csv')
 
 
+def has_fund_flow_data():
+    df = pd.read_csv('data/Morningstar_data_version_1.1_filtered_numOnly.csv')
+    # print(len(df.index))
+    df.insert(1, 'ff_data_available', '')
+    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    list_years = list(range(2000, 2022))
+    print()
+    for i in range(1,10): #  (len(df.index)):
+        ff_data = []
+        for year in list_years:
+            for month in list_months:
+                ff_column = f'Estimated Share Class Net Flow (Monthly) \n{year}-{month} \nBase \nCurrency'
+                print(ff_column)
+                value = df[ff_column][i]
+                print(value)
+                ff_data.append(value)
+        sum_ff_points = sum(x > 0 or x < 0 for x in ff_data)
+        if sum_ff_points <= 36:
+            df = df.drop(df.index[i], axis=0)
+        else:
+            pass
+        print(f'- : {i}')
+
+    # print(len(df.index))
+#
+#
+has_fund_flow_data()
+
+
 ########################################################################
 # NOTES:
 
