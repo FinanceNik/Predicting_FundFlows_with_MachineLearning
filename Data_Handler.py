@@ -4,8 +4,11 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import os
 import random
+
+# helps with debugging purposes. Allows for the terminal to display up to 500 columns/ rows.
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
+# Sometimes pandas throws a SettingWithCopy warning.  This warning can be ignored as its only there for safety purposes.
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
@@ -108,6 +111,7 @@ def convert_categorical_data():
     df_numerical_only.to_csv('data/Morningstar_data_version_1.1_filtered_numOnly.csv')
 
 
+# This function describes the variables of the whole dataset.
 def raw_data_description():
     df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
     description = df.describe(percentiles=[]).transpose().round(4)
@@ -117,6 +121,7 @@ def raw_data_description():
     print(description)
 
 
+# This function describes the variables of a dataset consisting of only the columns with time-series-like information.
 def time_series_data_description():
     df = pd.read_csv('data/Morningstar_data_version_1.1_filtered.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
@@ -136,6 +141,8 @@ def time_series_data_description():
     description.to_csv('time_series_data_describe.csv')
 
 
+# This function describes the variables of a dataset consisting of only the raw fnd characteristics retrieved by
+# Morningstar.
 def fund_characteristics_data_description():
     df = pd.read_csv('data/Morningstar_data_version_1.1_filtered_numOnly.csv')
     df.drop(list(df.filter(regex='Annual Report Net Expense Ratio')), axis=1, inplace=True)
@@ -155,28 +162,38 @@ def drop_if_not_enough_ff_data():
     list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
     list_years = list(range(2000, 2022))
 
+    # This loop first iterates over a row in the dataset, then over its year and finally the months in order to
+    # Count the number of occurring data-points in the fund flow columns. After that, the number of occurrences is
+    # written to a new column based on which the third-to-last line will then delete all funds with less than 36m
+    # of data.
     for i in range(len(df.index)):
         ff_data = []
         for year in list_years:
             for month in list_months:
+                # This is called an f-string which allows for the insertion of variables directly into the string.
                 ff_column = f'Estimated Share Class Net Flow (Monthly) \n{year}-{month} \nBase \nCurrency'
                 value = df[ff_column][i]
-                # print(value)
+                # Append the value to the list.
                 ff_data.append(value)
+
+        # This is called list-comprehension. It allows for the manipulation of a list within one line of code.
         sum_ff_points = int(sum(x > 0 or x < 0 for x in ff_data))
+        # Fill in the number of data points to the column.
         df['ff_data_points'][i] = sum_ff_points
         print(f'Setting ff_data point for: {i} -> done!')  # --> Verbose output to check on the progress.
 
+    # Drop the funds with less than 36 months of data.
     df = df.drop(df[df.ff_data_points < 36].index)
     df.to_csv('data/Morningstar_data_version_1.2_filtered_numOnly.csv')  # --> Save the dataset.
     print('Operation Finalized!')  # --> Verbose output to check if operation done.
 
 
-
-########################################################################
-# NOTES:
-
-# ----> Or interpolate the data with average / mean / null / -9999 values?
+# Function that converts all the missing values to zero. Better choice than dropping all the rows in which some
+# values are missing.
+def fill_NaN_df():
+    df = pd.read_csv('data/Morningstar_data_version_1.2_filtered_numOnly.csv')
+    df = df.fillna(0.0)
+    df.to_csv('data/Morningstar_data_version_1.3_filtered_numOnly.csv')  # --> Save the dataset.
 
 
 
