@@ -196,4 +196,19 @@ def fill_NaN_df():
     df.to_csv('data/Morningstar_data_version_1.3_filtered_numOnly.csv')  # --> Save the dataset.
 
 
+# Function that inserts a row to be populated with the S&P 500 Data off Yahoo in order to calculate alpha later on.
+def insert_SandP500_data():
+    df = pd.read_csv('data/Morningstar_data_version_1.3_filtered_numOnly.csv')
+
+    fill_data = []
+    for i in range(len(df.columns[:])):
+        fill_data.append(0.0)
+    df.loc[-1] = fill_data  # adding a row
+    df.index = df.index + 1  # shifting index
+    df = df.sort_index()  # sorting by index
+    # df['Name'][0] = 'SandP500'
+
+    df.to_csv('data/Morningstar_data_version_1.4_filtered_numOnly.csv')  # --> Save the dataset.
+
+
 
