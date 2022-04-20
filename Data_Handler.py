@@ -6,6 +6,7 @@ import os
 import random
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
+pd.options.mode.chained_assignment = None  # default='warn'
 
 
 # As the version of Morningstar does not allow for the export of the whole dataset at once, it has to be combined.
@@ -146,45 +147,35 @@ def fund_characteristics_data_description():
     description.to_csv('fund_characteristics_data_describe.csv')
 
 
-def has_fund_flow_data():
+# As described in the paper, the main objective is to analyze fund flows.
+def drop_if_not_enough_ff_data():
     df = pd.read_csv('data/Morningstar_data_version_1.1_filtered_numOnly.csv')
-    # print(len(df.index))
-    df.insert(1, 'ff_data_available', '')
+    df.insert(4, 'ff_data_points', '')
+
     list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
     list_years = list(range(2000, 2022))
-    print()
-    for i in range(1,10): #  (len(df.index)):
+
+    for i in range(len(df.index)):
         ff_data = []
         for year in list_years:
             for month in list_months:
                 ff_column = f'Estimated Share Class Net Flow (Monthly) \n{year}-{month} \nBase \nCurrency'
-                print(ff_column)
                 value = df[ff_column][i]
-                print(value)
+                # print(value)
                 ff_data.append(value)
-        sum_ff_points = sum(x > 0 or x < 0 for x in ff_data)
-        if sum_ff_points <= 36:
-            df = df.drop(df.index[i], axis=0)
-        else:
-            pass
-        print(f'- : {i}')
+        sum_ff_points = int(sum(x > 0 or x < 0 for x in ff_data))
+        df['ff_data_points'][i] = sum_ff_points
+        print(f'Setting ff_data point for: {i} -> done!')  # --> Verbose output to check on the progress.
 
-    # print(len(df.index))
-#
-#
-has_fund_flow_data()
+    df = df.drop(df[df.ff_data_points < 36].index)
+    df.to_csv('data/Morningstar_data_version_1.2_filtered_numOnly.csv')  # --> Save the dataset.
+    print('Operation Finalized!')  # --> Verbose output to check if operation done.
+
 
 
 ########################################################################
 # NOTES:
 
-# --> Create a function that describes the fund characteristics. How much data is missing? Visualize that!
-# df.drop([all fund flows, return and other time series variables.], axis=1)
-
-# --> Create a function with df.describe() && df.info() so that the reader of the thesis can have a look
-# at the data in its meta form.
-
-# --> Decide on which columns / characteristics to drop based on the amount of missing information!
 # ----> Or interpolate the data with average / mean / null / -9999 values?
 
 
