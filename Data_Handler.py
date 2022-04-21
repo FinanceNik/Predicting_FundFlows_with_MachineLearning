@@ -206,9 +206,13 @@ def insert_SandP500_data():
     df.loc[-1] = fill_data  # adding a row
     df.index = df.index + 1  # shifting index
     df = df.sort_index()  # sorting by index
-    # df['Name'][0] = 'SandP500'
+    df['Name'][0] = 'SandP500'
 
+    # Reverse the S&P dataset as its latest to oldest.
+    df_snp = pd.read_csv('data/SnP500_data.csv')
+    df_snp = df_snp.iloc[::-1]
+
+    df_snp.to_csv('data/SnP500_data.csv')
     df.to_csv('data/Morningstar_data_version_1.4_filtered_numOnly.csv')  # --> Save the dataset.
-
 
 
