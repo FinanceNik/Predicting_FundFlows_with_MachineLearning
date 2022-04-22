@@ -10,59 +10,17 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 pd.options.mode.chained_assignment = None  # default='warn'
 
-df = pd.read_csv('data/Morningstar_data_version_1.5_filtered_numOnly.csv')
+df = pd.read_csv('data/Morningstar_data_version_1.6_filtered_numOnly.csv')
 # For some reason beyond me, pandas is trying to re-set a new index column every time that df is instantiated.
 # Because these are always named 'Unnamed: {}', one can easily filter them with a regular expression.
-df = df.drop(list(df.filter(regex='Unnamed')), axis=1)
+df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
 
 # The first feature we would like to create is a fund's monthly alpha value.
 # For that we have to calculate the excess return, formula below.
 # --> Excess return = RF + β(MR – RF) – TR
-def rf_rate_conversion(data):
-    rf = pd.read_csv('data/rf.csv')
-    rf.rename(columns={'DTB3': 'risk_free',
-                       'DATE': 'date'}, inplace=True)
-    year = rf['date'].str[:4].astype(int)
-    month = rf['date'].str[5:7].astype(int)
-    rf.insert(1, "year", year)
-    rf.insert(2, "month", month)
-
-    rf.drop(rf.index[:11800], axis=0, inplace=True)
-    rf = rf.reset_index()
-
-    def convert_to_float():
-        for i in range(len(rf.index)):
-            try:
-                rf['risk_free'][i] = float(rf['risk_free'][i])
-            except:
-                rf['risk_free'][i] = 0.0
-
-    convert_to_float()
-
-    fill_data = []
-    for i in range(len(data.columns[:])):
-        fill_data.append(0.0)
-    data.loc[-1] = fill_data  # adding a row
-    data.index = data.index + 1  # shifting index
-    data = data.sort_index()  # sorting by index
-    data['Name'][0] = 'Risk_Free_Rate'
-
-    for year in range(2000, 2022):
-        for month in range(1, 13):
-            if month <= 9:
-                month_str = f'0{month}'
-            else:
-                month_str = str(month)
-            value = round(rf.loc[(rf['year'] == year) & (rf['month'] == month), 'risk_free'].mean(), 5)
-
-            ff_column = f'Monthly Gross Return \n{year}-{month_str} \nBase \nCurrency'
-            data[ff_column][0] = value
-
-    data.to_csv('data/Morningstar_data_version_1.6_filtered_numOnly.csv')
-
-
-rf_rate_conversion(df)
+def calculate_beta():
+    pass
 
 
 def excess_return(df):
@@ -93,7 +51,7 @@ def excess_return(df):
 
 
 
-# excess_return(df)
+excess_return(df)
 
 
 
