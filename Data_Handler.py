@@ -17,12 +17,12 @@ def dataset_combiner():
     completed_dataset = []
     path = '/home/thequant/Downloads/'
     for i in range(1, 8):
-        filename = f'version_1.1_part_{i}.csv'
+        filename = f'version_1.2_part_{i}.csv'
         df = pd.read_csv(path+filename)
         completed_dataset.append(df)
 
     completed_dataset = pd.concat(completed_dataset)
-    completed_dataset.to_csv('Morningstar_data_version_1.1.csv')
+    completed_dataset.to_csv('data/Morningstar_beta_data_1.0.csv')
     print(len(completed_dataset.index))
 
 
@@ -257,5 +257,37 @@ def insert_risk_free_rate_data(data):
             data[ff_column][0] = value
 
     data.to_csv('data/Morningstar_data_version_1.6_filtered_numOnly.csv')
+
+
+def beta_info():
+    df = pd.read_csv('data/Morningstar_beta_data_1.0.csv')
+    beta = 'Beta \n3 Yr (Qtr-End) \nRisk \nCurrency'
+    df = df.filter(['Name', beta], axis=1)
+    mean_beta = df[beta].mean()
+    df[beta] = df[beta].fillna(mean_beta)
+    df[beta] = df[beta].astype(float)
+    df.rename(columns={beta: 'beta'}, inplace=True)
+    # sub_df = df.filter(regex='Beta \n3 Yr (Qtr-End) \nRisk \nCurrency')
+    # print(sub_df.describe(percentiles=[]).transpose().round(0))
+
+    return df
+
+
+def insert_beta():
+    df = pd.read_csv('data/Morningstar_data_version_1.6_filtered_numOnly.csv')
+    beta_df = beta_info()
+    df.insert(1, 'beta', '')
+    for i in range(len(df.index)):
+        name = df['Name'][i]
+        value = beta_df.loc[beta_df['Name'] == name, 'beta']
+        print(value)
+        try:
+            df['beta'][i] = float(value)
+        except:
+            df['beta'][i] = value
+
+    df.to_csv('data/Morningstar_data_version_1.7_filtered_numOnly.csv')
+
+
 
 
