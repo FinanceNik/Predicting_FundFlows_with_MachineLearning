@@ -77,9 +77,25 @@ def excess_return(df):
                 mgr_column = f'Monthly Gross Return \n{year}-{month} \nBase \nCurrency'
                 mer_column = f'Monthly Excess Return {year} {month}'
 
-                df[mer_column][i] = df[mgr_column][i] - mean_return
-                print(df[mer_column][i])
+                if df[mgr_column][i] == 0.0:
+                    df[mer_column][i] = 0.0
+                else:
+                    df[mer_column][i] = df[mgr_column][i] - mean_return
+    return df
 
+
+def calculate_alpha():
+    df = excess_return()
+    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    list_years = list(range(2000, 2022))  # --> creates a list of values from 2000 to 2021.
+
+    # Create the columns for the log return for each month.
+    for year in list_years:
+        for month in list_months:
+            df.insert(1, f'Monthly Alpha Return {year} {month}', '')
+
+
+calculate_alpha()
 
 
 # Notes:
