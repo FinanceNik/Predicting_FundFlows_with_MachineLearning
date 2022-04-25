@@ -216,7 +216,8 @@ def insert_SandP500_data():
     df.to_csv('data/Morningstar_data_version_1.4_filtered_numOnly.csv')  # --> Save the dataset.
 
 
-def insert_risk_free_rate_data(data):
+def insert_risk_free_rate_data():
+    data = pd.read_csv('data/Morningstar_data_version_1.7_filtered_numOnly.csv')
     rf = pd.read_csv('data/rf.csv')
     rf.rename(columns={'DTB3': 'risk_free',
                        'DATE': 'date'}, inplace=True)
@@ -237,12 +238,6 @@ def insert_risk_free_rate_data(data):
 
     convert_to_float()
 
-    fill_data = []
-    for i in range(len(data.columns[:])):
-        fill_data.append(0.0)
-    data.loc[-1] = fill_data  # adding a row
-    data.index = data.index + 1  # shifting index
-    data = data.sort_index()  # sorting by index
     data['Name'][0] = 'Risk_Free_Rate'
 
     for year in range(2000, 2022):
@@ -251,12 +246,12 @@ def insert_risk_free_rate_data(data):
                 month_str = f'0{month}'
             else:
                 month_str = str(month)
-            value = round(rf.loc[(rf['year'] == year) & (rf['month'] == month), 'risk_free'].mean(), 5)
+            value = round(rf.loc[(rf['year'] == year) & (rf['month'] == month), 'risk_free'].mean() / 12, 6)
 
             ff_column = f'Monthly Gross Return \n{year}-{month_str} \nBase \nCurrency'
             data[ff_column][0] = value
 
-    data.to_csv('data/Morningstar_data_version_1.6_filtered_numOnly.csv')
+    data.to_csv('data/Morningstar_data_version_1.8_filtered_numOnly.csv')
 
 
 def beta_info():
