@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import os
+from sklearn.preprocessing import LabelBinarizer
 
 # helps with debugging purposes. Allows for the terminal to display up to 500 columns/ rows.
 pd.set_option('display.max_columns', 500)
@@ -102,9 +103,39 @@ def remove_many_nans():
     return df
 
 
-def convert_to_panel_data():
+def convert_return_data():
     df = remove_many_nans()
-    df = df[:10]
+
+    list_cols = ['Name']
+    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    list_years = list(range(2000, 2022))  # --> creates a list of values from 2000 to 2021.
+    for year in list_years:
+        for month in list_months:
+            list_cols.append(f'Monthly Gross Return \n{year}-{month} \nBase \nCurrency')
+
+    df_returns = pd.melt(frame=df[list_cols], id_vars=['Name'], var_name="year-month", value_name='monthly_return')
+
+    year = df_returns["year-month"].str[22:26].astype(int)
+    month = df_returns["year-month"].str[27:29].astype(int)
+
+    df_returns.insert(2, 'year', year)
+    df_returns.insert(2, 'month', month)
+
+    # df_returns.insert(1, 'fund_id', '')
+    #
+    # for i in range(len(df_returns.index)):
+    #     fund_id = f"{df_returns['Name'][i]}_{df_returns['year'][i]}_{df_returns['month'][i]}"
+    #     df_returns['fund_id'][i] = fund_id
+    #     print(f'done with {i} of {len(df_returns.index)} --> 1')
+
+    df_returns.drop(['year-month'], axis=1, inplace=True)
+
+    return df_returns
+
+
+def convert_to_panel_data():
+    df_returns = convert_return_data()
+    df = remove_many_nans()
 
     list_cols = []
     list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
@@ -116,18 +147,43 @@ def convert_to_panel_data():
     drops = df.loc[:, ~df.columns.isin(list_cols)]
     drops = list(drops.columns[:])
 
-    df3 = pd.melt(frame=df, id_vars=drops, var_name="year-month", value_name='ff')
+    df_panel = pd.melt(frame=df, id_vars=drops, var_name="year-month", value_name='fund_flow')
 
-    year = df3["year-month"].str[42:46].astype(int)
-    month = df3["year-month"].str[47:50].astype(int)
+    year = df_panel["year-month"].str[42:46].astype(int)
+    month = df_panel["year-month"].str[47:50].astype(int)
 
-    df3.insert(2, 'year', year)
-    df3.insert(2, 'month', month)
+    df_panel.insert(2, 'year', year)
+    df_panel.insert(2, 'month', month)
 
-    # Split the colum year-month into two columns for year & month, then match the year and month to the other time-series
-    # data points and fill them in.
+    df_panel.drop(list(df.filter(regex='Monthly Gross Return')), axis=1, inplace=True)
 
-    df3.to_csv('ZZZZZZ.csv')
+    # df_panel.insert(1, 'fund_id', '')
+
+    # for i in range(len(df_panel.index)):
+    #     fund_id = f"{df_panel['Name'][i]}_{df_panel['year'][i]}_{df_panel['month'][i]}"
+    #     df_panel['fund_id'][i] = fund_id
+    #     print(f'done with {i} of {len(df_panel.index)} --> 2')
+
+    monthly_return = df_returns.pop('monthly_return')
+    df_panel.insert(40, 'monthly_return', monthly_return)
+
+    df_panel.to_csv('data/Morningstar_data_version_2.1.csv')
 
 
-convert_to_panel_data()
+def dummy_variables():
+    df = pd.read_csv('data/Morningstar_data_version_2.1.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df.drop(['year-month'], axis=1, inplace=True)
+
+    dummy_list = ['Investment Area', 'Morningstar Category', 'Firm City']
+
+    df = pd.get_dummies(df, columns=dummy_list, drop_first=False)
+
+    return df
+
+# Things to do:
+# --> What to do with the Management Company Column...cant be dummies, have to do sth else.
+# --> Convert the annual expense ratio to a monthly one and map it to the respective row, so that its also panel data.
+# --> Calculate Alpha.
+# --> Run the Algos.
+# --> Done.
