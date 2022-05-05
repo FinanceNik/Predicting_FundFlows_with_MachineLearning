@@ -13,8 +13,10 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 def data_cleaning():
     df = pd.read_csv('data/Morningstar_data_version_1.1.csv')
+
     drops = ['Alpha 1 Yr (Gross Return)(Qtr-End)', 'Public', 'Number of Shareholders', 'Net Expense \nRatio',
              'Total Expense Ratio', 'IPO NAV']
+
     for drop in drops:
         try:
             df.drop([drop], axis=1, inplace=True)
@@ -22,12 +24,12 @@ def data_cleaning():
             print(f'Error dropping: {drop}')
 
     regex_drops = ['MER', 'Unnamed', 'Morningstar Analyst', 'P/E Ratio (TTM)', 'beta']
+
     for regex_drop in regex_drops:
         try:
             df.drop(list(df.filter(regex=regex_drop)), axis=1, inplace=True)
         except:
             print(f'Error dropping: {regex_drop}')
-
     df = df.replace('’', '', regex=True)
 
     return df
@@ -72,15 +74,37 @@ def remove_younger_than_3_years():
 
     df = df[~(df['Inception \nDate'] > '2019-04-01')]
 
-    print(len(df.index))
+    df.to_csv('data/Morningstar_data_version_2.0.csv')
 
     return df
 
 
 def remove_many_nans():
-    df = remove_younger_than_3_years()
-    nans = df.isna().sum()
-    nans.to_csv('xx.csv')
+    df = pd.read_csv('data/Morningstar_data_version_2.0.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+
+    col_drops = ['Time Horizon', '# of \nStock \nHoldings (Short)',
+                 'Average Market Cap \n(mil) (Short) \nPortfolio \nCurrency', 'ff_data_points', 'Performance Fee',
+                 'Beta \n2000-01-01 \nto 2022-03-31 \nBase \nCurrency',
+                 'Estimated Share Class Net Flow (Monthly) \n2022-01 \nBase \nCurrency',
+                 'Estimated Share Class Net Flow (Monthly) \n2022-02 \nBase \nCurrency']
+    for col_drop in col_drops:
+        df.drop([col_drop], axis=1, inplace=True)
+
+    row_drops = ['Net Assets \n- Average', 'Manager \nTenure \n(Longest)', 'Percent of Female Executives', 'Firm City',
+                 'P/E Ratio (TTM) (Long)', 'Investment Area', 'Management \nFee']
+    for row_drop in row_drops:
+        df = df[df[row_drop].notna()]
+
+    mgmt_fee = df.pop('Management \nFee')
+    df.insert(9, 'Management \nFee', mgmt_fee)
+
+    return df
 
 
-remove_many_nans()
+def convert_to_panel_data():
+    df = remove_many_nans()
+
+
+
+convert_to_panel_data()
