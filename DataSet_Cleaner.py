@@ -104,7 +104,30 @@ def remove_many_nans():
 
 def convert_to_panel_data():
     df = remove_many_nans()
+    df = df[:10]
 
+    list_cols = []
+    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    list_years = list(range(2000, 2022))  # --> creates a list of values from 2000 to 2021.
+    for year in list_years:
+        for month in list_months:
+            list_cols.append(f'Estimated Share Class Net Flow (Monthly) \n{year}-{month} \nBase \nCurrency')
+
+    drops = df.loc[:, ~df.columns.isin(list_cols)]
+    drops = list(drops.columns[:])
+
+    df3 = pd.melt(frame=df, id_vars=drops, var_name="year-month", value_name='ff')
+
+    year = df3["year-month"].str[42:46].astype(int)
+    month = df3["year-month"].str[47:50].astype(int)
+
+    df3.insert(2, 'year', year)
+    df3.insert(2, 'month', month)
+
+    # Split the colum year-month into two columns for year & month, then match the year and month to the other time-series
+    # data points and fill them in.
+
+    df3.to_csv('ZZZZZZ.csv')
 
 
 convert_to_panel_data()
