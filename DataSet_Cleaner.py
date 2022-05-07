@@ -4,12 +4,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 from sklearn.preprocessing import LabelBinarizer
-
+import warnings
 # helps with debugging purposes. Allows for the terminal to display up to 500 columns/ rows.
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 # Sometimes pandas throws a SettingWithCopy warning.  This warning can be ignored as its only there for safety purposes.
 pd.options.mode.chained_assignment = None  # default='warn'
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 
 def data_cleaning():
@@ -181,9 +182,73 @@ def dummy_variables():
 
     return df
 
+
+def convert_annual_expenses():
+    df = remove_many_nans()
+    df = df.reset_index()
+    # df = df[:10]
+    # print(df.head())
+
+    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    list_years = list(range(2000, 2022))
+    list_cols = ['Name']
+    for year in list_years:
+        col = f'Annual Report Net Expense Ratio \nYear{year}'
+        list_cols.append(col)
+
+    df_annum_exp = df[list_cols]
+    df_annum_exp = df_annum_exp.fillna(0.0)
+    for year in list_years:
+        for month in list_months:
+            df_annum_exp.insert(1, f"monthly_exp_ratio_{year}_{month}", "")
+
+    print(len(df_annum_exp.index))
+    for i in range(len(df_annum_exp.index)):
+        print(f' done with --> {i} | {round((i / len(df_annum_exp.index) * 100), 4)}%')
+        for year in list_years:
+            annual = df_annum_exp[f'Annual Report Net Expense Ratio \nYear{year}'][i]
+            monthly = round(annual / 12, 6)
+        for year in list_years:
+            for month in list_months:
+                df_annum_exp[f"monthly_exp_ratio_{year}_{month}"][i] = monthly
+
+    df_annum_exp.drop(list(df_annum_exp.filter(regex='Annual Report Net Expense Ratio')), axis=1, inplace=True)
+
+    list_cols = ['Name']
+    for year in list_years:
+        for month in list_months:
+            list_cols.append(f'monthly_exp_ratio_{year}_{month}')
+
+    df_exp = pd.melt(frame=df_annum_exp[list_cols], id_vars=['Name'], var_name="year-month", value_name='monthly_exp')
+
+    print(len(df_exp.index))
+
+    df_exp.drop(['year-month'], axis=1, inplace=True)
+
+    df_exp.to_csv('monthly_expenses.csv')
+
+
+def concat_maindf_and_expdf():
+    df = dummy_variables()
+    df_exp = pd.read_csv('monthly_expenses.csv')
+
+    monthly_exp = df_exp.pop('monthly_exp')
+    df.insert(9, 'monthly_exp', monthly_exp)
+
+    df.drop(list(df.filter(regex='Annual Report Net Expense Ratio')), axis=1, inplace=True)
+
+    df.to_csv('data/Morningstar_data_version_3.0.csv')
+
+
+
+
+
+
+
 # Things to do:
 # --> What to do with the Management Company Column...cant be dummies, have to do sth else.
 # --> Convert the annual expense ratio to a monthly one and map it to the respective row, so that its also panel data.
+# --> Fill all remaining NaN's with 0.0.
 # --> Calculate Alpha.
 # --> Run the Algos.
 # --> Done.
