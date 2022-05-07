@@ -242,11 +242,6 @@ def concat_maindf_and_expdf():
     df.to_csv('data/Morningstar_data_version_3.0.csv')
 
 
-
-
-
-
-
 # Things to do:
 # --> What to do with the Management Company Column...cant be dummies, have to do sth else.
 # --> Fill all remaining NaN's with 0.0.
