@@ -4,101 +4,45 @@ import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 import os
+import datetime as dt
 import warnings
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 pd.options.mode.chained_assignment = None  # default='warn'
-
-df = pd.read_csv('data/Morningstar_data_version_1.9_filtered_numOnly.csv')
-# For some reason beyond me, pandas is trying to re-set a new index column every time that df is instantiated.
-# Because these are always named 'Unnamed: {}', one can easily filter them with a regular expression.
-df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 
-# The first feature we would like to create is a fund's monthly alpha value.
-# For that we have to calculate the excess return, formula below.
-# --> Excess return = RF + β(MR – RF) – TR
-def calculate_TR():
-    # print(df.columns[50:60])
+def get_fama_french_data():
+    import pandas_datareader.data as reader
 
-    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    list_years = list(range(2000, 2022))  # --> creates a list of values from 2000 to 2021.
+    start = dt.date(2000, 1, 1)
+    end = dt.date(2021, 12, 31)
 
-    try:
-        df.insert(5, 'total_return', '')
-    except:
-        pass
-
-    for i in range(len(df.index)):
-        gross_returns = []
-        for year in list_years:
-            for month in list_months:
-                mgr_column = f'Monthly Gross Return \n{year}-{month} \nBase \nCurrency'
-                value = df[mgr_column][i]
-                gross_returns.append(value)
-
-        init_value = 1.0
-        return_values = []
-        for j in range(len(gross_returns)):
-            if j == 0:
-                return_values.append(init_value)
-            else:
-                next_value = float(return_values[-1] * (1 + float((gross_returns[j]) / 100)))
-                return_values.append(next_value)
-        total_return = return_values[-1]
-        df['total_return'][i] = total_return
-
-    df.to_csv('data/Morningstar_data_version_1.9_filtered_numOnly.csv')
+    factors = reader.DataReader('F-F_Research_Data_Factors', 'famafrench', start, end)[0]
+    print(factors)
 
 
-# --> Excess return = RF + β(MR – RF) – TR
-def excess_return(df):
-    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    list_years = list(range(2000, 2022))  # --> creates a list of values from 2000 to 2021.
+get_fama_french_data()
 
-    # Create the columns for the log return for each month.
-    for year in list_years:
-        for month in list_months:
-            df.insert(1, f'Monthly Excess Return {year} {month}', '')
 
-    for i in range(len(df.index[1:10])):
-        gross_returns = []
-        for year in list_years:
-            for month in list_months:
-                mgr_column = f'Monthly Gross Return \n{year}-{month} \nBase \nCurrency'
-                value = df[mgr_column][i]
-                gross_returns.append(value)
-
-        mean_return = sum(gross_returns) / len(gross_returns)
-
-        for year in list_years:
-            for month in list_months:
-                mgr_column = f'Monthly Gross Return \n{year}-{month} \nBase \nCurrency'
-                mer_column = f'Monthly Excess Return {year} {month}'
-
-                if df[mgr_column][i] == 0.0:
-                    df[mer_column][i] = 0.0
-                else:
-                    df[mer_column][i] = df[mgr_column][i] - mean_return
-    return df
+def transform_return_df():
+    # Take the df after the dummy variables and then drop all columns except for
+    # the name and all the return columns.
+    # fill all nans with 0.0
+    # transform the data such as the format is time series, i.e. funds in cols and
+    # returns in rows.
+    # insert the fama-french factors into the dataset, at the end. pd.concat([df, df_fama])
+    pass
 
 
 def calculate_alpha():
-    df = excess_return()
-    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    list_years = list(range(2000, 2022))  # --> creates a list of values from 2000 to 2021.
-
-    # Create the columns for the log return for each month.
-    for year in list_years:
-        for month in list_months:
-            df.insert(1, f'Monthly Alpha Return {year} {month}', '')
+    df = pd.read_csv('data/Morningstar_data_version_3.0.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
 
-calculate_alpha()
+# calculate_alpha()
 
 
 # Notes:
-# --> Next to do: Create the function that calculates alpha
-
 # --> Lastly, rebalance the dataset so that the first occurrence of ff data is t=1, next is t=2, ..., t=n

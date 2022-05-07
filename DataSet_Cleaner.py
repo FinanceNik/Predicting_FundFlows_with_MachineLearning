@@ -237,6 +237,8 @@ def concat_maindf_and_expdf():
 
     df.drop(list(df.filter(regex='Annual Report Net Expense Ratio')), axis=1, inplace=True)
 
+    df = df.fillna(0.0)
+
     df.to_csv('data/Morningstar_data_version_3.0.csv')
 
 
@@ -247,7 +249,6 @@ def concat_maindf_and_expdf():
 
 # Things to do:
 # --> What to do with the Management Company Column...cant be dummies, have to do sth else.
-# --> Convert the annual expense ratio to a monthly one and map it to the respective row, so that its also panel data.
 # --> Fill all remaining NaN's with 0.0.
 # --> Calculate Alpha.
 # --> Run the Algos.
