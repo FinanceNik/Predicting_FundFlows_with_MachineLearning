@@ -1,11 +1,7 @@
-import numpy
 import pandas as pd
-import numpy as np
-from matplotlib import pyplot as plt
-import seaborn as sns
-import os
 import datetime as dt
 import DataSet_Cleaner as dsc
+import statsmodels.api as sm
 import warnings
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', 500)
@@ -54,18 +50,28 @@ def calculate_alpha():
     df = pd.read_csv('Alpha_Calculation_Dataset.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
-    not_funds = ['Mkt-RF', 'SMB', 'HML', 'RF']
-    for i in range(len(df.index[4:])):
-        # Calculate the Excess return with the merge formula.
+    count = 0
+    for i in df.columns[4:]:
+        count = count+1
 
-        # After excess returns have been established the regression can be run.
+        df[f"{i}_excess"] = df[i] - df.RF
+        df.drop([i], axis=1, inplace=True)
 
-        # Get only the Alpha and the Beta values from the regression, the rest is not needed.
+        y = df[f"{i}_excess"]  # Dataframe of all returns from fund_i
+        X = df[['Mkt-RF', 'SMB', 'HML', 'RF']]  # Dataframe of all factors
+        X_sm = sm.add_constant(X)
+        model = sm.OLS(y, X_sm)
+        results = model.fit()
+        coeff = results.params
+        alpha = round(coeff[0], 8)  # Alpha for the whole period for fund_i
+        beta = round(coeff[1], 8)  # Beta for the whole period for fund_i
 
-        pass
-
-
-
+        # Problem: I need to calculate the alpha in cumulating of periods, i.e.:
+        # Need to check for cells with value 0.0 --> Then no alpha should be calculated.
+        # --> Need an array of:
+        #                       alpha_1 from fund_i of period_1
+        #                       alpha_2 from fund_i of period_1 && period_2
+        #                       alpha_3 from fund_i of period_1 && period_2 && period_3
 
 
 calculate_alpha()
