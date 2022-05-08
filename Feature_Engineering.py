@@ -18,8 +18,6 @@ def get_fama_french_data():
     import pandas_datareader.data as reader
 
     def transform_return_df():
-        # Take the df after the dummy variables and then drop all columns except for
-        # the name and all the return columns.
         df_transposed = dsc.remove_many_nans()
         df_transposed.drop(list(df_transposed.filter(regex='Unnamed')), axis=1, inplace=True)
 
@@ -31,7 +29,6 @@ def get_fama_french_data():
                 list_cols.append(f'Monthly Gross Return \n{year}-{month} \nBase \nCurrency')
 
         df_transposed = df_transposed[list_cols]
-        # fill all nans with 0.0
         df_transposed = df_transposed.fillna(0.0)
         df_transposed = df_transposed.set_index('Name').T
 
@@ -40,26 +37,14 @@ def get_fama_french_data():
     start = dt.date(2000, 1, 1)
     end = dt.date(2021, 12, 31)
 
-    df_fama = reader.DataReader('F-F_Research_Data_Factors', 'famafrench', start, end)[0].reset_index()
-    df = transform_return_df().reset_index()
+    df_fama = reader.DataReader('F-F_Research_Data_Factors', 'famafrench', start, end)[0]
+    df = transform_return_df()
 
-    # The index fucking hates me and I dont know to get rid of this fucking unique index error.
-    # --> First guess would be to change one index to a unique value (like random nbrs) and then reset the index
+    df_final = pd.concat([df, df_fama], axis=1)
 
-    df_fama.index = list(df_fama.index)
-    df.index = list(df.index)
-
-    print(df_fama.index[:20])
-    print(df.index[:20])
-
-    df = pd.concat([df, df_fama])
-    #
-    # df.to_csv('Alpha_Calculation_Dataset.csv')
+    df_final.to_csv('Alpha_Calculation_Dataset.csv')
 
     return df
-
-
-get_fama_french_data()
 
 
 def calculate_alpha():
