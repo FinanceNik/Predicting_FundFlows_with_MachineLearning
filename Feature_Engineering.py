@@ -40,19 +40,35 @@ def get_fama_french_data():
     df_fama = reader.DataReader('F-F_Research_Data_Factors', 'famafrench', start, end)[0]
     df = transform_return_df()
 
-    df_final = pd.concat([df, df_fama], axis=1)
+    col_pops = ['Mkt-RF', 'SMB', 'HML', 'RF']
+    for col in col_pops:
+        col_popped = df_fama.pop(col)
+        df.insert(0, col, col_popped.values)
 
-    df_final.to_csv('Alpha_Calculation_Dataset.csv')
+    df.to_csv('Alpha_Calculation_Dataset.csv')
 
     return df
 
 
 def calculate_alpha():
-    df = pd.read_csv('data/Morningstar_data_version_3.0.csv')
+    df = pd.read_csv('Alpha_Calculation_Dataset.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
+    not_funds = ['Mkt-RF', 'SMB', 'HML', 'RF']
+    for i in range(len(df.index[4:])):
+        # Calculate the Excess return with the merge formula.
 
-# calculate_alpha()
+        # After excess returns have been established the regression can be run.
+
+        # Get only the Alpha and the Beta values from the regression, the rest is not needed.
+
+        pass
+
+
+
+
+
+calculate_alpha()
 
 
 # Notes:
