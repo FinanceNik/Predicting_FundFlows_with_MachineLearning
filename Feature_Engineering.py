@@ -49,29 +49,57 @@ def get_fama_french_data():
 def calculate_alpha():
     df = pd.read_csv('Alpha_Calculation_Dataset.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    # df = df[['Mkt-RF', 'SMB', 'HML', 'RF',
+    #          '1919 Financial Services A', '1919 Financial Services C', '1919 Financial Services I']]
 
-    count = 0
-    for i in df.columns[4:]:
-        count = count+1
+    count_excess = 0
+    for fund in df.columns[4:]:
+        df[f"{fund}_excess"] = df[fund] - df.RF
+        for i in range(len(df.index)):
+            if df[f"{fund}"][i] == 0:
+                try:
+                    df[f"{fund}_excess"][i] = 0.0
+                except:
+                    pass
+        df.drop([fund], axis=1, inplace=True)
+        count_excess = count_excess + 1
+        print(f" stage_excess --> {count_excess}")
 
-        df[f"{i}_excess"] = df[i] - df.RF
-        df.drop([i], axis=1, inplace=True)
+    count_regression = 0
+    for fund in df.columns[4:]:
+        df.insert(1, f'{fund}_alpha', '')
+        df.insert(1, f'{fund}_beta', '')
 
-        y = df[f"{i}_excess"]  # Dataframe of all returns from fund_i
-        X = df[['Mkt-RF', 'SMB', 'HML', 'RF']]  # Dataframe of all factors
-        X_sm = sm.add_constant(X)
-        model = sm.OLS(y, X_sm)
-        results = model.fit()
-        coeff = results.params
-        alpha = round(coeff[0], 8)  # Alpha for the whole period for fund_i
-        beta = round(coeff[1], 8)  # Beta for the whole period for fund_i
+        for i_row in range(1, len(df.index)):
+            y = df[f"{fund}"][:i_row]
+            X = df[['Mkt-RF', 'SMB', 'HML', 'RF']][:i_row]
+            X_sm = sm.add_constant(X)
+            model = sm.OLS(y, X_sm)
+            results = model.fit()
+            coeff = results.params
+            alpha = round(coeff[0], 8)  # Alpha for the whole period for fund_i
+            beta = round(coeff[1], 8)  # Beta for the whole period for fund_i
 
-        # Problem: I need to calculate the alpha in cumulating of periods, i.e.:
-        # Need to check for cells with value 0.0 --> Then no alpha should be calculated.
-        # --> Need an array of:
-        #                       alpha_1 from fund_i of period_1
-        #                       alpha_2 from fund_i of period_1 && period_2
-        #                       alpha_3 from fund_i of period_1 && period_2 && period_3
+            df[f'{fund}_alpha'][i_row] = alpha
+            df[f'{fund}_beta'][i_row] = beta
+
+            if df[f"{fund}"][i_row] == 0:
+                df[f'{fund}_alpha'] = 0.0
+                df[f'{fund}_beta'] = 0.0
+
+        count_regression = count_regression+1
+        print(f" stage_regression --> {count_regression}")
+
+    include_cols = [i for i in list(df) if 'alpha' in i
+                    or 'beta' in i
+                    or 'Mkt' in i
+                    or 'SMB' in i
+                    or 'HML' in i
+                    or 'RF' in i]
+
+    df_final = df[include_cols]
+
+    df_final.to_csv('Alpha_AND_Beta_Calculation_Finalized.csv')
 
 
 calculate_alpha()
