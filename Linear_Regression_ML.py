@@ -6,13 +6,15 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
 import seaborn as sns
 from matplotlib import pyplot as plt
 
 # print(list(pd.read_csv('data/Morningstar_data_version_4.0.csv').columns[:]), '\n')
 
 
-def regression_type_data(ml_type):
+def ml_algo_selection(ml_type):
     if ml_type == 'regression':
         data = pd.read_csv('data/Morningstar_data_version_4.0.csv')
         data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
@@ -36,8 +38,8 @@ def regression_type_data(ml_type):
         return data
 
 
-def random_forrest():
-    df = regression_type_data('classifier')
+def svm_classification():
+    df = ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]
@@ -51,22 +53,77 @@ def random_forrest():
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    model = RandomForestClassifier(verbose=1, n_jobs=40, n_estimators=40)
+    model = svm.SVC(kernel='linear', verbose=1)
     model.fit(X_train, Y_train)
 
     Y_pred = model.predict(X_test)
 
-    accu = accuracy_score(Y_test, Y_pred)
     classi = classification_report(Y_test, Y_pred)
 
-    print(accu, '\n', classi)
+    print(classi)
+
+
+svm_classification()
+
+
+def k_nearest_neightbour():
+    df = ml_algo_selection('classifier')
+
+    predictor = 'fund_flow'
+    drops = [predictor]
+
+    X = df.drop(drops, axis=1).values
+    y = df[predictor].values
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.25, random_state=None)
+
+    scaler = MinMaxScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    model = KNeighborsClassifier(n_neighbors=10, n_jobs=-1, algorithm='brute', metric='cosine')
+    model.fit(X_train, Y_train)
+
+    Y_pred = model.predict(X_test)
+
+    classi = classification_report(Y_test, Y_pred)
+
+    print(classi)
+
+
+# k_nearest_neightbour()
+
+
+def random_forrest():
+    df = ml_algo_selection('classifier')
+
+    predictor = 'fund_flow'
+    drops = [predictor]
+
+    X = df.drop(drops, axis=1).values
+    y = df[predictor].values
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.25, random_state=None)
+
+    scaler = MinMaxScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    model = RandomForestClassifier(verbose=1, n_jobs=-1, n_estimators=100)
+    model.fit(X_train, Y_train)
+
+    Y_pred = model.predict(X_test)
+
+    classi = classification_report(Y_test, Y_pred)
+
+    print(classi)
 
 
 # random_forrest()
 
 
 def random_forrest2():
-    df = regression_type_data('classifier')
+    df = ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]
@@ -80,7 +137,7 @@ def random_forrest2():
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    rf = RandomForestClassifier(random_state=42, n_jobs=-1)
+    rf = RandomForestClassifier(verbose=1, random_state=42, n_jobs=-1)
     params = {
         'max_depth': [2, 3, 5, 10, 20],
         'min_samples_leaf': [5, 10, 20, 50, 100, 200],
@@ -89,22 +146,25 @@ def random_forrest2():
 
     grid_search = GridSearchCV(estimator=rf,
                                param_grid=params,
-                               cv=4,
-                               n_jobs=-1, verbose=1, scoring="accuracy")
+                               cv=4, verbose=1, scoring="accuracy")
 
     grid_search.fit(X_train, Y_train)
 
     best_score = grid_search.best_score_
     rf_best = grid_search.best_estimator_
+    importance = rf_best.feature_importances_
+
+    imp_df = pd.DataFrame({
+        "Varname": X_train.columns,
+        "Imp": importance
+    })
+    imp_df.sort_values(by="Imp", ascending=False)
 
     print(best_score)
 
 
-random_forrest2()
-
-
 def linear_regression():
-    df = regression_type_data('classifier')
+    df = ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]
