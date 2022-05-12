@@ -122,13 +122,6 @@ def convert_return_data():
     df_returns.insert(2, 'year', year)
     df_returns.insert(2, 'month', month)
 
-    # df_returns.insert(1, 'fund_id', '')
-    #
-    # for i in range(len(df_returns.index)):
-    #     fund_id = f"{df_returns['Name'][i]}_{df_returns['year'][i]}_{df_returns['month'][i]}"
-    #     df_returns['fund_id'][i] = fund_id
-    #     print(f'done with {i} of {len(df_returns.index)} --> 1')
-
     df_returns.drop(['year-month'], axis=1, inplace=True)
 
     return df_returns
@@ -157,13 +150,6 @@ def convert_to_panel_data():
     df_panel.insert(2, 'month', month)
 
     df_panel.drop(list(df.filter(regex='Monthly Gross Return')), axis=1, inplace=True)
-
-    # df_panel.insert(1, 'fund_id', '')
-
-    # for i in range(len(df_panel.index)):
-    #     fund_id = f"{df_panel['Name'][i]}_{df_panel['year'][i]}_{df_panel['month'][i]}"
-    #     df_panel['fund_id'][i] = fund_id
-    #     print(f'done with {i} of {len(df_panel.index)} --> 2')
 
     monthly_return = df_returns.pop('monthly_return')
     df_panel.insert(40, 'monthly_return', monthly_return)
@@ -202,7 +188,6 @@ def convert_annual_expenses():
         for month in list_months:
             df_annum_exp.insert(1, f"monthly_exp_ratio_{year}_{month}", "")
 
-    print(len(df_annum_exp.index))
     for i in range(len(df_annum_exp.index)):
         print(f' done with --> {i} | {round((i / len(df_annum_exp.index) * 100), 4)}%')
         for year in list_years:
@@ -221,8 +206,6 @@ def convert_annual_expenses():
 
     df_exp = pd.melt(frame=df_annum_exp[list_cols], id_vars=['Name'], var_name="year-month", value_name='monthly_exp')
 
-    print(len(df_exp.index))
-
     df_exp.drop(['year-month'], axis=1, inplace=True)
 
     df_exp.to_csv('monthly_expenses.csv')
@@ -240,11 +223,3 @@ def concat_maindf_and_expdf():
     df = df.fillna(0.0)
 
     df.to_csv('data/Morningstar_data_version_3.0.csv')
-
-
-# Things to do:
-# --> What to do with the Management Company Column...cant be dummies, have to do sth else.
-# --> Fill all remaining NaN's with 0.0.
-# --> Calculate Alpha.
-# --> Run the Algos.
-# --> Done.

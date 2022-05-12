@@ -9,9 +9,13 @@ from tensorflow.keras.callbacks import EarlyStopping
 import seaborn as sns
 import Data_Handler as dh
 
-df = dh.data_cleaning()
-X = df.drop(['Darlehen - Vertragsstatus'], axis=1).values
-y = df['Darlehen - Vertragsstatus'].values
+df = pd.read_csv('data/Morningstar_data_version_4.0.csv')
+df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+df.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)  # --> Do something about these vars.
+# print(df.columns[:20])
+
+X = df.drop(['fund_flow'], axis=1).values
+y = df['fund_flow'].values
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=101)
 
@@ -25,13 +29,16 @@ model.add(Dense(13, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(1, activation='sigmoid'))
 model.compile(loss='binary_crossentropy', optimizer='adam')
-model.fit(x=X_train, y=y_train, epochs=10, validation_data=(X_test, y_test))
+model.fit(x=X_train, y=y_train, epochs=3, validation_data=(X_test, y_test))
 
-predictions = model.predict(X_test)
+# predictions = model.predict(X_test)
 
-print(confusion_matrix(y_test, predictions))
-print('\n')
-print(classification_report(y_test, predictions))
+accuracy = model.evaluate(X, y, verbose=0)
+print(accuracy)
+
+# print(confusion_matrix(y_test, predictions))
+# print('\n')
+# print(classification_report(y_test, predictions))
 
 # losses = pd.DataFrame(model.history.history)
 # losses.plot()

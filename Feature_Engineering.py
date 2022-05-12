@@ -49,8 +49,6 @@ def get_fama_french_data():
 def calculate_alpha():
     df = pd.read_csv('Alpha_Calculation_Dataset.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
-    # df = df[['Mkt-RF', 'SMB', 'HML', 'RF',
-    #          '1919 Financial Services A', '1919 Financial Services C', '1919 Financial Services I']]
 
     count_excess = 0
     for fund in df.columns[4:]:
@@ -102,8 +100,71 @@ def calculate_alpha():
     df_final.to_csv('Alpha_AND_Beta_Calculation_Finalized.csv')
 
 
-calculate_alpha()
+def create_alpha_df():
+    df = pd.read_csv('Alpha_AND_Beta_Calculation_Finalized.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='beta')), axis=1, inplace=True)
+
+    df = df.fillna(0.0)
+    df = df.T
+
+    df.insert(0, 'Name', '')
+    df['Name'] = df.index
+    df = df.reset_index()
+
+    df.to_csv('alpha.csv')
+
+    return df
 
 
-# Notes:
-# --> Lastly, rebalance the dataset so that the first occurrence of ff data is t=1, next is t=2, ..., t=n
+def create_beta_df():
+    df = pd.read_csv('Alpha_AND_Beta_Calculation_Finalized.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df.drop(list(df.filter(regex='alpha')), axis=1, inplace=True)
+
+    df = df.fillna(0.0)
+    df = df.T
+
+    df.insert(0, 'Name', '')
+    df['Name'] = df.index
+    df = df.reset_index()
+
+    df.to_csv('beta.csv')
+
+    return df
+
+
+def transform_alpha_AND_beta():
+    df = pd.read_csv('data/Morningstar_data_version_3.0.csv')
+    df_alpha = pd.read_csv('alpha.csv')
+    df_alpha.drop(list(df_alpha.filter(regex='Unnamed')), axis=1, inplace=True)
+    df_alpha = df_alpha.iloc[::-1]
+    df_alpha = df_alpha.reset_index()
+    df_beta = pd.read_csv('beta.csv')
+    df_beta.drop(list(df_beta.filter(regex='Unnamed')), axis=1, inplace=True)
+    df_beta = df_beta.iloc[::-1]
+    df_beta = df_beta.reset_index()
+
+    list_cols_alpha = list(df_alpha.columns[1:])
+
+    df_alpha_final = pd.melt(frame=df_alpha[list_cols_alpha], id_vars=['Name'],
+                             var_name="remove", value_name='monthly_alpha')
+
+    list_cols_beta = list(df_alpha.columns[1:])
+
+    df_beta_final = pd.melt(frame=df_alpha[list_cols_beta], id_vars=['Name'],
+                             var_name="remove", value_name='monthly_beta')
+
+    monthly_alpha = df_alpha_final.pop('monthly_alpha')
+    df.insert(1, 'monthly_alpha', monthly_alpha)
+
+    monthly_beta = df_beta_final.pop('monthly_beta')
+    df.insert(1, 'monthly_beta', monthly_beta)
+
+    df.to_csv('data/Morningstar_data_version_4.0.csv')
+
+
+# transform_alpha_AND_beta()
+
+
+
