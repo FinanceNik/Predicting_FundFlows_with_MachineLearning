@@ -223,3 +223,13 @@ def concat_maindf_and_expdf():
     df = df.fillna(0.0)
 
     df.to_csv('data/Morningstar_data_version_3.0.csv')
+
+
+def analyses():
+    df = pd.read_csv('data/Morningstar_data_version_4.0.csv')
+    desc = df.describe(percentiles=[])
+    desc = desc.transpose().round(4)
+    desc.to_csv('fund_char_description.csv')
+
+
+analyses()
