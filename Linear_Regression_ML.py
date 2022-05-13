@@ -11,8 +11,6 @@ from sklearn import svm
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-# print(list(pd.read_csv('data/Morningstar_data_version_4.0.csv').columns[:]), '\n')
-
 
 def ml_algo_selection(ml_type):
     if ml_type == 'regression':
@@ -150,7 +148,13 @@ def random_forrest2():
 
     grid_search.fit(X_train, Y_train)
 
+    print(grid_search.best_params_)
+    grid_predictions = grid_search.predict(X_test)
+
+    print(classification_report(Y_test, grid_predictions))
+
     best_score = grid_search.best_score_
+    print(best_score)
     rf_best = grid_search.best_estimator_
     importance = rf_best.feature_importances_
 
@@ -158,9 +162,10 @@ def random_forrest2():
         "Varname": X_train.columns,
         "Imp": importance
     })
-    imp_df.sort_values(by="Imp", ascending=False)
+    print(imp_df.sort_values(by="Imp", ascending=False))
 
-    print(best_score)
+
+
 
 
 def linear_regression():

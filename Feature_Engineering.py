@@ -136,11 +136,11 @@ def create_beta_df():
 
 def transform_alpha_AND_beta():
     df = pd.read_csv('data/Morningstar_data_version_3.0.csv')
-    df_alpha = pd.read_csv('alpha.csv')
+    df_alpha = pd.read_csv('data/alpha.csv')
     df_alpha.drop(list(df_alpha.filter(regex='Unnamed')), axis=1, inplace=True)
     df_alpha = df_alpha.iloc[::-1]
     df_alpha = df_alpha.reset_index()
-    df_beta = pd.read_csv('beta.csv')
+    df_beta = pd.read_csv('data/beta.csv')
     df_beta.drop(list(df_beta.filter(regex='Unnamed')), axis=1, inplace=True)
     df_beta = df_beta.iloc[::-1]
     df_beta = df_beta.reset_index()
@@ -150,9 +150,9 @@ def transform_alpha_AND_beta():
     df_alpha_final = pd.melt(frame=df_alpha[list_cols_alpha], id_vars=['Name'],
                              var_name="remove", value_name='monthly_alpha')
 
-    list_cols_beta = list(df_alpha.columns[1:])
+    list_cols_beta = list(df_beta.columns[1:])
 
-    df_beta_final = pd.melt(frame=df_alpha[list_cols_beta], id_vars=['Name'],
+    df_beta_final = pd.melt(frame=df_beta[list_cols_beta], id_vars=['Name'],
                              var_name="remove", value_name='monthly_beta')
 
     monthly_alpha = df_alpha_final.pop('monthly_alpha')
