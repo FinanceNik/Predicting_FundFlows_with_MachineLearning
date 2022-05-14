@@ -166,11 +166,93 @@ def transform_alpha_AND_beta():
 
 def insert_factors():
     # Insert the Fama-French 3 Factor Model Factors into the dataset.
+    df_factors = pd.read_csv('data/Alpha_Calculation_Dataset.csv')
+    df_factors.drop(list(df_factors.filter(regex='Unnamed')), axis=1, inplace=True)
 
-    # Lag all the predictors!
+    list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    list_years = list(range(2000, 2022))  # --> creates a list of values from 2000 to 2021.
 
-    pass
+    df = dsc.remove_many_nans()
+    df.drop(list(df_factors.filter(regex='Unnamed')), axis=1, inplace=True)
 
+    df_factors = df_factors[['Mkt-RF', 'SMB', 'HML', 'RF']]
+
+    print(df_factors)
+
+    df_factors.insert(1, 'Date', '')
+
+    dates = []
+    for year in list_years:
+        for month in list_months:
+            dates.append(f'{year}_{month}')
+
+    for i in range(len(df_factors.index)):
+        df_factors['Date'][i] = dates[i]
+
+    df = df[['Name']]
+
+    for year in reversed(list_years):
+        for month in reversed(list_months):
+            df.insert(1, f'Mkt-RF_{year}_{month}', '')
+
+    for year in reversed(list_years):
+        for month in reversed(list_months):
+            df.insert(1, f'SMB_{year}_{month}', '')
+
+    for year in reversed(list_years):
+        for month in reversed(list_months):
+            df.insert(1, f'HML_{year}_{month}', '')
+
+    for year in reversed(list_years):
+        for month in reversed(list_months):
+            df.insert(1, f'RF_{year}_{month}', '')
+
+    for year in list_years:
+        for month in list_months:
+            df[f'Mkt-RF_{year}_{month}'] = float(df_factors.loc[df_factors['Date'] == f'{year}_{month}', 'Mkt-RF'])
+            df[f'SMB_{year}_{month}'] = float(df_factors.loc[df_factors['Date'] == f'{year}_{month}', 'SMB'])
+            df[f'HML_{year}_{month}'] = float(df_factors.loc[df_factors['Date'] == f'{year}_{month}', 'HML'])
+            df[f'RF_{year}_{month}'] = float(df_factors.loc[df_factors['Date'] == f'{year}_{month}', 'RF'])
+
+    list_cols_MKTRF = ['Name']
+    list_cols_SMB = ['Name']
+    list_cols_HML = ['Name']
+    list_cols_RF = ['Name']
+    for year in list_years:
+        for month in list_months:
+            list_cols_MKTRF.append(f'Mkt-RF_{year}_{month}')
+            list_cols_SMB.append(f'SMB_{year}_{month}')
+            list_cols_HML.append(f'HML_{year}_{month}')
+            list_cols_RF.append(f'RF_{year}_{month}')
+
+    df_mktrf = pd.melt(frame=df[list_cols_MKTRF], id_vars=['Name'], var_name="year-month", value_name='mktrf')
+    df_mktrf.drop(['year-month'], axis=1, inplace=True)
+    
+    df_smb = pd.melt(frame=df[list_cols_SMB], id_vars=['Name'], var_name="year-month", value_name='smb')
+    df_smb.drop(['year-month'], axis=1, inplace=True)
+    
+    df_hml = pd.melt(frame=df[list_cols_HML], id_vars=['Name'], var_name="year-month", value_name='hml')
+    df_hml.drop(['year-month'], axis=1, inplace=True)
+    
+    df_rf = pd.melt(frame=df[list_cols_RF], id_vars=['Name'], var_name="year-month", value_name='rf')
+    df_rf.drop(['year-month'], axis=1, inplace=True)
+
+    mktrf = df_mktrf.pop('mktrf')
+    smb = df_smb.pop('smb')
+    hml = df_hml.pop('hml')
+    rf = df_rf.pop('rf')
+
+    df_final = pd.read_csv('data/Morningstar_data_version_4.0.csv')
+
+    df_final.insert(1, 'mktrf', mktrf)
+    df_final.insert(1, 'smb', smb)
+    df_final.insert(1, 'hml', hml)
+    df_final.insert(1, 'rf', rf)
+
+    # df_final.to_csv('data/Morningstar_data_version_5.0.csv')
+
+
+insert_factors()
 
 
 

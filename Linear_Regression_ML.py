@@ -14,14 +14,14 @@ from matplotlib import pyplot as plt
 
 def ml_algo_selection(ml_type):
     if ml_type == 'regression':
-        data = pd.read_csv('data/Morningstar_data_version_4.0.csv')
+        data = pd.read_csv('data/Morningstar_data_version_5.0.csv')
         data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
         data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
 
         return data
 
     elif ml_type == 'classifier':
-        data = pd.read_csv('data/Morningstar_data_version_4.0.csv')
+        data = pd.read_csv('data/Morningstar_data_version_5.0.csv')
         data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
 
         def ff_positive(x):
@@ -61,7 +61,7 @@ def svm_classification():
     print(classi)
 
 
-svm_classification()
+# svm_classification()
 
 
 def k_nearest_neightbour():

@@ -3,8 +3,9 @@
 
 ---
 #### Data Preparation
-- Insert Fama-French Factors from 3-Factor Model 
+- ~~Insert Fama-French Factors from 3-Factor Model~~
 - Lag all of the characteristics by 1 period
+  - [mkt-rf, hml, smb, rf, alpha, beta, exp, fund_flow, return]
 ---
 #### Visualization
 - Table of Final Features:
@@ -27,4 +28,4 @@
 #### Analysis - Data Exploration
 - Correlation plot
 - distribution plots for metrics 
-- Histograms for variables 
+- Histograms for variables
