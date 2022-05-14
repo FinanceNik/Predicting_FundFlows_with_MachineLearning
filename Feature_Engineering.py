@@ -252,7 +252,16 @@ def insert_factors():
     # df_final.to_csv('data/Morningstar_data_version_5.0.csv')
 
 
-insert_factors()
+def lag_or_lead():
+    df = pd.read_csv('data/Morningstar_data_version_5.0.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df['fund_flow'] = df['fund_flow'].shift(7345)
+
+    df = df.fillna(0.0)
+    df.to_csv('data/Morningstar_data_version_5.0_lagged.csv')
+
+
+lag_or_lead()
 
 
 

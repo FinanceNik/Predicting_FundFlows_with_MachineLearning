@@ -8,20 +8,18 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
-import seaborn as sns
-from matplotlib import pyplot as plt
 
 
 def ml_algo_selection(ml_type):
     if ml_type == 'regression':
-        data = pd.read_csv('data/Morningstar_data_version_5.0.csv')
+        data = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
         data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
         data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
 
         return data
 
     elif ml_type == 'classifier':
-        data = pd.read_csv('data/Morningstar_data_version_5.0.csv')
+        data = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
         data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
 
         def ff_positive(x):
@@ -117,7 +115,7 @@ def random_forrest():
     print(classi)
 
 
-# random_forrest()
+random_forrest()
 
 
 def random_forrest2():
@@ -163,9 +161,6 @@ def random_forrest2():
         "Imp": importance
     })
     print(imp_df.sort_values(by="Imp", ascending=False))
-
-
-
 
 
 def linear_regression():

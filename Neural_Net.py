@@ -6,10 +6,8 @@ from tensorflow.keras.layers import Dense, Dropout
 from matplotlib import pyplot as plt
 import pandas as pd
 from tensorflow.keras.callbacks import EarlyStopping
-import seaborn as sns
-import Data_Handler as dh
 
-df = pd.read_csv('data/Morningstar_data_version_4.0.csv')
+df = pd.read_csv('data/Morningstar_data_version_5.0.csv')
 df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 df.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)  # --> Do something about these vars.
 # print(df.columns[:20])
@@ -17,7 +15,7 @@ df.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True
 X = df.drop(['fund_flow'], axis=1).values
 y = df['fund_flow'].values
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=101)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=101)
 
 scaler = MinMaxScaler()
 X_train = scaler.fit_transform(X_train)
@@ -33,7 +31,7 @@ model.fit(x=X_train, y=y_train, epochs=3, validation_data=(X_test, y_test))
 
 # predictions = model.predict(X_test)
 
-accuracy = model.evaluate(X, y, verbose=0)
+accuracy = model.evaluate(X, y)
 print(accuracy)
 
 # print(confusion_matrix(y_test, predictions))
