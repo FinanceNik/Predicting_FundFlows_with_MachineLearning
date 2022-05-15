@@ -10,8 +10,8 @@
 #### Visualization
 - Table of Final Features:
   - Add a description column
-- Create Correlation Matrix
-  - Create ID for Investment Area, Morningstar Cate., Firm City 
+- ~~Create Correlation Matrix~~
+  - ~~Create ID for Investment Area, Morningstar Cate., Firm City~~
 - Create Feature Importance Table
 ---
 #### Random Forest
@@ -27,6 +27,6 @@
 - Create Table of success metrics 
 ---
 #### Analysis - Data Exploration
-- Correlation plot
+- ~~Correlation plot~~
 - distribution plots for metrics 
-- Histograms for variables
+- ~~Histograms for variables~~

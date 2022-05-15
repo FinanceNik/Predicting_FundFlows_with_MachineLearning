@@ -130,4 +130,98 @@ def correlation_matrix():
     plt.savefig('corr.png', dpi=1000)
 
 
-# correlation_matrix()
+def count_fund_flow_values():
+    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged_noDummies.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+
+    def ff_positive(x):
+        if x >= 0.0:
+            return 1
+        elif x < 0.0:
+            return 0
+
+    df['fund_flow'] = df['fund_flow'].apply(ff_positive)
+    df = df.rename(columns={'fund_flow': 'Fund Flow'})
+    plot = sns.countplot(x='Fund Flow', data=df, palette='Blues')
+    plt.title('Fund Flow Occurrences \n (0 = negative ff, 0 = positive ff)', fontsize=24)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylabel('Observations in mil.', fontsize=22)
+    plt.xlabel('Fund Flow Class', fontsize=22)
+    plt.show()
+    plt.tight_layout()
+
+
+def distribution_fund_flows():
+    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df = df.rename(columns={'fund_flow': 'Fund Flow'})
+
+    df = df[(df["Fund Flow"] > 0) | (df["Fund Flow"] < 0)]
+
+    sns.histplot(data=df, x='Fund Flow', bins=30000, log_scale=True, kde=True, alpha=0.6)
+    plt.ylim(0, 110)
+    plt.title('Log. Fund Flow Distribution in USD', fontsize=24)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylabel('Observations', fontsize=22)
+    plt.xlabel('Log. Fund Flow in USD', fontsize=22)
+    plt.show()
+
+
+def average_fund_flow_per_year():
+    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]
+    df['fund_flow'] = df['fund_flow'] / 1_000_000_000
+
+    list_years = list(range(2000, 2022))
+    list_ff = []
+    for year in list_years:
+        value = int(round(df.loc[df['year'] == year, 'fund_flow'].sum(), 0))
+        list_ff.append(value)
+    mean = round(sum(list_ff) / len(list_ff), 0)
+    print(mean)
+    mean_list = [mean for x in range(len(list_ff))]
+    plt.grid(alpha=0.6)
+    plt.bar(list_years, list_ff, color='#3072a1', alpha=0.99)
+    plt.plot(list_years, mean_list, color='#ffa412', alpha=0.99, linewidth=5)
+    plt.ylim(-600, 200)
+    plt.title('Sum of Fund Flow per Year in bn. USD', fontsize=24)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylabel('Capital Flow in bn. USD', fontsize=22)
+    plt.xlabel('Years', fontsize=22)
+    plt.show()
+
+
+# average_fund_flow_per_year()
+
+
+def count_morningstar_cate():
+    df = pd.read_csv('data/Morningstar_data_version_5.0.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+
+    df_ia = df.filter(regex='Morningstar Category_')
+    cols = list(df_ia.filter(regex='Morningstar Category').columns[:])
+    counts = []
+    for k in cols:
+        value = int(df[k].sum() / 264)
+        counts.append(value)
+
+    cols = [x.split('_')[1] for x in cols]
+
+    plt.figure(figsize=(20, 18))
+    plt.grid(alpha=0.6)
+    plt.bar(cols, counts, color='#3072a1', alpha=0.99)
+    plt.title('Sum of Fund Flow per Year in bn. USD', fontsize=24)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylabel('Capital Flow in bn. USD', fontsize=22)
+    plt.xlabel('Morningstar Category', fontsize=22)
+    plt.xticks(rotation=90)
+    plt.subplots_adjust(bottom=0.6)
+    plt.show()
+
+
+count_morningstar_cate()
