@@ -214,7 +214,7 @@ def count_morningstar_cate():
     plt.figure(figsize=(20, 18))
     plt.grid(alpha=0.6)
     plt.bar(cols, counts, color='#3072a1', alpha=0.99)
-    plt.title('Sum of Fund Flow per Year in bn. USD', fontsize=24)
+    plt.title('Sum of Fund Flow per Year in bn. USD', fontsize=20)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
     plt.ylabel('Capital Flow in bn. USD', fontsize=22)
@@ -224,4 +224,26 @@ def count_morningstar_cate():
     plt.show()
 
 
-count_morningstar_cate()
+def fund_flow_to_expense_ratio():
+    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged_noDummies.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+
+    df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]
+    df = df[(df["monthly_exp"] > 0)]
+    df['monthly_exp'] = df["monthly_exp"] * 12
+
+    # print(df.columns[:])
+
+    y = df['monthly_exp'][:]
+    x = df['year'][:]
+
+    sns.set(font_scale=1.3)
+    plot = sns.jointplot(data=df, x=x, y=y, kind='reg', line_kws={"color": "#ffa412"})
+    plt.title('Distribution of Yearly Expense Ratio to Year', y=1.2, x=-3, fontsize=22)
+    plot.ax_joint.set_xlabel('Year', fontsize=18)
+    plot.ax_joint.set_ylabel('Yearly Expense Ratio in Percent', fontsize=18)
+    plt.tight_layout()
+    plt.show()
+
+
+# fund_flow_to_expense_ratio()
