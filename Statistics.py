@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import math
 import seaborn as sns
 from matplotlib import pyplot as plt
 import warnings
@@ -214,17 +215,20 @@ def count_morningstar_cate():
     plt.figure(figsize=(20, 18))
     plt.grid(alpha=0.6)
     plt.bar(cols, counts, color='#3072a1', alpha=0.99)
-    plt.title('Sum of Fund Flow per Year in bn. USD', fontsize=20)
+    plt.title('Number of Funds per Morningstar Category', fontsize=20)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
-    plt.ylabel('Capital Flow in bn. USD', fontsize=22)
+    plt.ylabel('Observations', fontsize=22)
     plt.xlabel('Morningstar Category', fontsize=22)
     plt.xticks(rotation=90)
     plt.subplots_adjust(bottom=0.6)
     plt.show()
 
 
-def fund_flow_to_expense_ratio():
+# count_morningstar_cate()
+
+
+def expense_ratio_to_year():
     df = pd.read_csv('data/Morningstar_data_version_5.0_lagged_noDummies.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
@@ -246,4 +250,85 @@ def fund_flow_to_expense_ratio():
     plt.show()
 
 
-# fund_flow_to_expense_ratio()
+def fund_flow_to_expense():
+    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged_noDummies.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df = df.fillna(0.0)
+    df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]
+    df = df[(df["fund_flow"] > -8_000_0) | (df["fund_flow"] < 8_000_0)]
+    df = df[(df["fund_flow"] < -10000)]
+    df = df[(df["fund_flow"] > -1000000)]
+    df['monthly_exp'] = df["monthly_exp"] * 12
+    df = df[(df["monthly_exp"] < 4)]
+    df = df[(df["monthly_exp"] > 0)]
+
+    df = df.sample(n=100_000)
+
+    y = df['fund_flow'][:]
+    x = df['monthly_exp'][:]
+
+    sns.set(rc={'figure.figsize': (25, 15)})
+    sns.set(font_scale=1.3)
+
+    plot = sns.jointplot(data=df, x=x, y=y, kind="reg", line_kws={"color": "#ffa412"})
+
+    plt.title('Expense Ratio to Fund Flow', y=1.2, x=-3, fontsize=22)
+    plot.ax_joint.set_xlabel('Expense Ratio in Percent', fontsize=18)
+    plot.ax_joint.set_ylabel('Monthly Fund Flow', fontsize=18)
+    # plt.savefig('xx.png', dpi=500)
+    plt.show()
+
+
+# fund_flow_to_expense()
+
+
+def fund_flow_to_mgmt_expense():
+    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged_noDummies.csv')
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    df = df.fillna(0.0)
+    df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]
+    df = df[(df["fund_flow"] > -8_000_0) | (df["fund_flow"] < 8_000_0)]
+    df = df[(df["fund_flow"] < 10_000_000)]
+    df = df[(df["fund_flow"] > 10000)]
+
+    df = df.sample(n=100_000)
+
+    y = df['fund_flow']
+    x = df['Management \nFee']
+
+    sns.set(rc={'figure.figsize': (25, 15)})
+    sns.set(font_scale=1.3)
+
+    plot = sns.jointplot(data=df, x=x, y=y, kind="reg", line_kws={"color": "#ffa412"})
+
+    plt.title('Management Fee to Fund Flow', y=1.2, x=-3, fontsize=22)
+    plot.ax_joint.set_xlabel('Management Fee in Percent', fontsize=18)
+    plot.ax_joint.set_ylabel('Monthly Fund Flow', fontsize=18)
+    # plt.savefig('xx.png', dpi=500)
+    plt.show()
+
+
+def feature_importance(x, y, model):
+
+    df = pd.DataFrame(list(zip(x, y)), columns=['Name', 'Value'])
+    df = df.sort_values('Value', ascending=True)
+    df = df.reset_index()
+    df.drop(['index'], axis=1, inplace=True)
+    df = df[-20:]
+
+    plt.figure(figsize=(20, 20))
+    plt.grid(alpha=0.6)
+    plt.barh(df['Name'], df['Value'], color='#3072a1', alpha=0.99)
+    plt.title(f'Feature Importance of {model} Model', fontsize=26)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.ylabel('Features', fontsize=24)
+    plt.xlabel('Importance', fontsize=24)
+    plt.xticks(rotation=90)
+    plt.subplots_adjust(bottom=0.6)
+    plt.tight_layout()
+    plt.show()
+
+
+def confusion_matrix():
+    None

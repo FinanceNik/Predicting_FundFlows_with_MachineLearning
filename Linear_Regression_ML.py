@@ -8,6 +8,8 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
+import Statistics
+import pickle
 
 
 def ml_algo_selection(ml_type):
@@ -15,6 +17,16 @@ def ml_algo_selection(ml_type):
         data = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
         data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
         data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
+
+        data = data.rename(columns={'Manager \nTenure \n(Average)': 'Avg. Manager Tenure',
+                                    'Manager \nTenure \n(Longest)': 'Max. Manager Tenure',
+                                    'Net Assets \n- Average': 'Avg. Net Assets',
+                                    'Average Market Cap (mil) (Long) \nPortfolio \nCurrency': 'Avg. Market Cap',
+                                    'Management \nFee': 'Management Fee'})
+        for i, k in enumerate(list(data.columns[:])):
+            data = data.rename(columns={list(data.columns[:])[i]: f'{list(data.columns[:])[i]} lagged'})
+
+        data = data.rename(columns={'fund_flow lagged': 'fund_flow'})
 
         return data
 
@@ -30,6 +42,16 @@ def ml_algo_selection(ml_type):
 
         data['fund_flow'] = data['fund_flow'].apply(ff_positive)
         data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
+
+        data = data.rename(columns={'Manager \nTenure \n(Average)': 'Avg. Manager Tenure',
+                                    'Manager \nTenure \n(Longest)': 'Max. Manager Tenure',
+                                    'Net Assets \n- Average': 'Avg. Net Assets',
+                                    'Average Market Cap (mil) (Long) \nPortfolio \nCurrency': 'Avg. Market Cap',
+                                    'Management \nFee': 'Management Fee'})
+        for i, k in enumerate(list(data.columns[:])):
+            data = data.rename(columns={list(data.columns[:])[i]: f'{list(data.columns[:])[i]} lagged'})
+
+        data = data.rename(columns={'fund_flow lagged': 'fund_flow'})
 
         return data
 
@@ -99,7 +121,7 @@ def random_forrest():
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.25, random_state=None)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=None)
 
     scaler = MinMaxScaler()
     X_train = scaler.fit_transform(X_train)
@@ -108,11 +130,24 @@ def random_forrest():
     model = RandomForestClassifier(verbose=1, n_jobs=-1, n_estimators=100)
     model.fit(X_train, Y_train)
 
+    # save the model to disk
+    filename = 'rf_model.sav'
+    pickle.dump(model, open(filename, 'wb'))
+
+    # # retrieve the model
+    # model = pickle.load(open(filename, 'rb'))
+
     Y_pred = model.predict(X_test)
-
+    accu = accuracy_score(Y_test, Y_pred)
+    conf_matrix = confusion_matrix(Y_test, Y_pred)
     classi = classification_report(Y_test, Y_pred)
+    feature_imp = model.feature_importances_
 
-    print(classi)
+    feature_names = list(df.drop(drops, axis=1).columns[:])
+
+    Statistics.feature_importance(feature_names, feature_imp, 'Random Forest')
+
+    print(accu)
 
 
 random_forrest()
