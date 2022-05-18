@@ -140,12 +140,17 @@ def random_forrest():
     Y_pred = model.predict(X_test)
     accu = accuracy_score(Y_test, Y_pred)
     conf_matrix = confusion_matrix(Y_test, Y_pred)
-    classi = classification_report(Y_test, Y_pred)
+    report = classification_report(Y_test, Y_pred, output_dict=True)
     feature_imp = model.feature_importances_
 
     feature_names = list(df.drop(drops, axis=1).columns[:])
 
     Statistics.feature_importance(feature_names, feature_imp, 'Random Forest')
+    Statistics.confusion_matrix(conf_matrix, 'Random Forest')
+
+    df = pd.DataFrame(report).transpose()
+
+    df.to_csv('report.csv')
 
     print(accu)
 

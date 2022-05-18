@@ -15,10 +15,10 @@
 - Create Feature Importance Table
 ---
 #### Random Forest
-- Run Algo
-- Insert list of feature importance to table
-- Create Confusion Matrix
-- Create Table of Classification Report 
+- ~~Run Algo~~
+- ~~Insert list of feature importance to table~~
+- ~~Create Confusion Matrix~~
+- ~~Create Table of Classification Report~~
 ---
 #### Random Forest Regression
 - Code the RFR

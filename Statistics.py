@@ -319,16 +319,27 @@ def feature_importance(x, y, model):
     plt.figure(figsize=(20, 20))
     plt.grid(alpha=0.6)
     plt.barh(df['Name'], df['Value'], color='#3072a1', alpha=0.99)
-    plt.title(f'Feature Importance of {model} Model', fontsize=26)
+    plt.title(f'Feature Importance of {model} Model\n', fontsize=26)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
-    plt.ylabel('Features', fontsize=24)
-    plt.xlabel('Importance', fontsize=24)
+    plt.ylabel('\nFeatures', fontsize=24)
+    plt.xlabel('\nImportance', fontsize=24)
     plt.xticks(rotation=90)
     plt.subplots_adjust(bottom=0.6)
     plt.tight_layout()
     plt.show()
 
 
-def confusion_matrix():
-    None
+def confusion_matrix(matrix, model):
+    ax = sns.heatmap(matrix, annot=True, cmap='Blues')
+
+    ax.set_title(f'Confusion Matrix for {model} Model\n', fontsize=26)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    ax.set_xlabel('\nPredicted Values', fontsize=24)
+    ax.set_ylabel('\nActual Values ', fontsize=24)
+
+    ax.xaxis.set_ticklabels(['False', 'True'])
+    ax.yaxis.set_ticklabels(['False', 'True'])
+
+    plt.show()
