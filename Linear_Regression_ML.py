@@ -10,54 +10,11 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
 import Statistics
 import pickle
-
-
-def ml_algo_selection(ml_type):
-    if ml_type == 'regression':
-        data = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
-        data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
-        data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
-
-        data = data.rename(columns={'Manager \nTenure \n(Average)': 'Avg. Manager Tenure',
-                                    'Manager \nTenure \n(Longest)': 'Max. Manager Tenure',
-                                    'Net Assets \n- Average': 'Avg. Net Assets',
-                                    'Average Market Cap (mil) (Long) \nPortfolio \nCurrency': 'Avg. Market Cap',
-                                    'Management \nFee': 'Management Fee'})
-        for i, k in enumerate(list(data.columns[:])):
-            data = data.rename(columns={list(data.columns[:])[i]: f'{list(data.columns[:])[i]} lagged'})
-
-        data = data.rename(columns={'fund_flow lagged': 'fund_flow'})
-
-        return data
-
-    elif ml_type == 'classifier':
-        data = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
-        data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
-
-        def ff_positive(x):
-            if x >= 0.0:
-                return 1
-            elif x < 0.0:
-                return 0
-
-        data['fund_flow'] = data['fund_flow'].apply(ff_positive)
-        data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
-
-        data = data.rename(columns={'Manager \nTenure \n(Average)': 'Avg. Manager Tenure',
-                                    'Manager \nTenure \n(Longest)': 'Max. Manager Tenure',
-                                    'Net Assets \n- Average': 'Avg. Net Assets',
-                                    'Average Market Cap (mil) (Long) \nPortfolio \nCurrency': 'Avg. Market Cap',
-                                    'Management \nFee': 'Management Fee'})
-        for i, k in enumerate(list(data.columns[:])):
-            data = data.rename(columns={list(data.columns[:])[i]: f'{list(data.columns[:])[i]} lagged'})
-
-        data = data.rename(columns={'fund_flow lagged': 'fund_flow'})
-
-        return data
+import DataSet_Cleaner as dsc
 
 
 def svm_classification():
-    df = ml_algo_selection('classifier')
+    df = dsc.ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]
@@ -85,7 +42,7 @@ def svm_classification():
 
 
 def k_nearest_neightbour():
-    df = ml_algo_selection('classifier')
+    df = dsc.ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]
@@ -113,7 +70,7 @@ def k_nearest_neightbour():
 
 
 def random_forrest():
-    df = ml_algo_selection('classifier')
+    df = dsc.ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]
@@ -155,11 +112,11 @@ def random_forrest():
     print(accu)
 
 
-random_forrest()
+# random_forrest()
 
 
 def random_forrest2():
-    df = ml_algo_selection('classifier')
+    df = dsc.ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]
@@ -204,7 +161,7 @@ def random_forrest2():
 
 
 def linear_regression():
-    df = ml_algo_selection('classifier')
+    df = dsc.ml_algo_selection('classifier')
 
     predictor = 'fund_flow'
     drops = [predictor]

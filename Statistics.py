@@ -343,3 +343,11 @@ def confusion_matrix(matrix, model):
     ax.yaxis.set_ticklabels(['False', 'True'])
 
     plt.show()
+
+
+def loss_visualizer():
+    pass
+
+
+def accuracy_visualizer():
+    pass
