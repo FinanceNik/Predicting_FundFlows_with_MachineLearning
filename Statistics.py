@@ -345,9 +345,27 @@ def confusion_matrix(matrix, model):
     plt.show()
 
 
-def loss_visualizer():
-    pass
+def loss_visualizer(train_loss, val_loss, epochs):
+    plt.plot(range(1, epochs+1), train_loss, label='Training loss')
+    plt.plot(range(1, epochs+1), val_loss, label='validation loss')
+    plt.title('Training and Validation loss\n', fontsize=26)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.xlabel('\nEpochs', fontsize=24)
+    plt.ylabel('\nLoss', fontsize=24)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 
-def accuracy_visualizer():
-    pass
+def accuracy_visualizer(train_acc, val_acc, epochs):
+    plt.plot(range(1, epochs+1), train_acc, label='Training accuracy')
+    plt.plot(range(1, epochs+1), val_acc, label='validation accuracy')
+    plt.title('Training and Validation accuracy\n', fontsize=26)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.xlabel('\nEpochs', fontsize=24)
+    plt.ylabel('\nAccuracy', fontsize=24)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
