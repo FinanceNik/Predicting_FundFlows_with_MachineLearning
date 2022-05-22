@@ -4,6 +4,7 @@ import math
 import seaborn as sns
 from matplotlib import pyplot as plt
 import warnings
+import DataSet_Cleaner as dsc
 pd.options.mode.chained_assignment = None  # default='warn'
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
@@ -369,3 +370,13 @@ def accuracy_visualizer(train_acc, val_acc, epochs):
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+
+def regression_baseline():
+    df = dsc.ml_algo_selection('regression')
+    average_ff = round(df['fund_flow'].mean(), 0)
+
+    print(average_ff)
+
+
+regression_baseline()
