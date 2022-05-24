@@ -159,9 +159,10 @@ def distribution_fund_flows():
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
     df = df.rename(columns={'fund_flow': 'Fund Flow'})
 
-    df = df[(df["Fund Flow"] > 0) | (df["Fund Flow"] < 0)]
+    df = df[(df["Fund Flow"] > -100_000)]
+    df = df[(df["Fund Flow"] < 100_000)]
 
-    sns.histplot(data=df, x='Fund Flow', bins=30000, log_scale=True, kde=True, alpha=0.6)
+    sns.histplot(data=df, x='Fund Flow', bins=30000, log_scale=False, kde=True, alpha=0.6)
     plt.ylim(0, 110)
     plt.title('Log. Fund Flow Distribution in USD', fontsize=24)
     plt.xticks(fontsize=18)
@@ -169,6 +170,9 @@ def distribution_fund_flows():
     plt.ylabel('Observations', fontsize=22)
     plt.xlabel('Log. Fund Flow in USD', fontsize=22)
     plt.show()
+
+
+# distribution_fund_flows()
 
 
 def average_fund_flow_per_year():
@@ -377,6 +381,3 @@ def regression_baseline():
     average_ff = round(df['fund_flow'].mean(), 0)
 
     print(average_ff)
-
-
-regression_baseline()

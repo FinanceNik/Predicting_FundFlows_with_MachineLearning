@@ -267,3 +267,73 @@ def ml_algo_selection(ml_type):
         data = data.rename(columns={'fund_flow lagged': 'fund_flow'})
 
         return data
+
+    elif ml_type == 'extended_classifier':
+        data = pd.read_csv('data/Morningstar_data_version_5.0_lagged_noDummies.csv')  # Trying out different datasets.
+        data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
+
+        data = data[(data["fund_flow"] < 10_000_000)]
+        data = data[(data["fund_flow"] > -10_000_000)]
+        data = data[(data["fund_flow"] != 0)]
+
+        min_ff = data['fund_flow'].min()
+        max_ff = data['fund_flow'].max()
+
+        def categorize_ff(val):
+            if val >= max_ff * 0.60:
+                return 10
+            elif val >= max_ff * 0.40:
+                return 9
+            elif val >= max_ff * 0.35:
+                return 8
+            elif val >= max_ff * 0.30:
+                return 7
+            elif val >= max_ff * 0.25:
+                return 6
+            elif val >= max_ff * 0.20:
+                return 5
+            elif val >= max_ff * 0.15:
+                return 4
+            elif val >= max_ff * 0.10:
+                return 3
+            elif val >= max_ff * 0.05:
+                return 2
+            elif val > max_ff * 0.00:
+                return 1
+            elif val == max_ff * 0.00:
+                return 0
+            elif val >= min_ff * 0.05:
+                return -1
+            elif val >= min_ff * 0.10:
+                return -2
+            elif val >= min_ff * 0.15:
+                return -3
+            elif val >= min_ff * 0.20:
+                return -4
+            elif val >= min_ff * 0.30:
+                return -5
+            elif val >= min_ff * 0.40:
+                return -6
+            elif val >= min_ff * 0.50:
+                return -7
+            elif val >= min_ff * 0.60:
+                return -8
+            elif val >= min_ff * 0.80:
+                return -9
+            elif val < min_ff * 0.80:
+                return -10
+
+        data['fund_flow'] = data['fund_flow'].apply(categorize_ff)
+        data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
+
+        data = data.rename(columns={'Manager \nTenure \n(Average)': 'Avg. Manager Tenure',
+                                    'Manager \nTenure \n(Longest)': 'Max. Manager Tenure',
+                                    'Net Assets \n- Average': 'Avg. Net Assets',
+                                    'Average Market Cap (mil) (Long) \nPortfolio \nCurrency': 'Avg. Market Cap',
+                                    'Management \nFee': 'Management Fee'})
+        for i, k in enumerate(list(data.columns[:])):
+            data = data.rename(columns={list(data.columns[:])[i]: f'{list(data.columns[:])[i]} lagged'})
+
+        data = data.rename(columns={'fund_flow lagged': 'fund_flow'})
+
+        return data

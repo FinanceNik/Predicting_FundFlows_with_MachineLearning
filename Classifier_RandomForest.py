@@ -6,67 +6,9 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from sklearn.model_selection import GridSearchCV
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn import svm
 import Statistics
 import pickle
 import DataSet_Cleaner as dsc
-
-
-def svm_classification():
-    df = dsc.ml_algo_selection('classifier')
-
-    predictor = 'fund_flow'
-    drops = [predictor]
-
-    X = df.drop(drops, axis=1).values
-    y = df[predictor].values
-
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.25, random_state=None)
-
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-
-    model = svm.SVC(kernel='linear', verbose=1)
-    model.fit(X_train, Y_train)
-
-    Y_pred = model.predict(X_test)
-
-    classi = classification_report(Y_test, Y_pred)
-
-    print(classi)
-
-
-# svm_classification()
-
-
-def k_nearest_neightbour():
-    df = dsc.ml_algo_selection('classifier')
-
-    predictor = 'fund_flow'
-    drops = [predictor]
-
-    X = df.drop(drops, axis=1).values
-    y = df[predictor].values
-
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.25, random_state=None)
-
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-
-    model = KNeighborsClassifier(n_neighbors=10, n_jobs=-1, algorithm='brute', metric='cosine')
-    model.fit(X_train, Y_train)
-
-    Y_pred = model.predict(X_test)
-
-    classi = classification_report(Y_test, Y_pred)
-
-    print(classi)
-
-
-# k_nearest_neightbour()
 
 
 def random_forrest():

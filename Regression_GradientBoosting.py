@@ -13,10 +13,18 @@ from sklearn import metrics
 import os
 
 
-def gradient_boosting():
+def gradient_boosting(min, max, n):
     df = dsc.ml_algo_selection('regression')
-    # df['fund_flow'] = np.log(df['fund_flow'])  # If nothing works, try logging values.
-    df = df.sample(1_000)
+    df = df[(df["fund_flow"] < max)]
+    df = df[(df["fund_flow"] > min)]
+    df = df.sample(n)
+
+    def scaling(x):
+        x = (2 * (x - min) / (max - min)) - 1
+        return x
+
+    df['fund_flow'] = df['fund_flow'].apply(scaling)
+
     predictor = 'fund_flow'
     drops = [predictor]
 
@@ -48,13 +56,11 @@ def gradient_boosting():
 
     try:
         explained_variance_score = metrics.explained_variance_score(Y_test, Y_pred)
-        print('Explained Variance:', explained_variance_score)
     except:
         explained_variance_score = 'none'
 
     try:
         d2_absolute_error_score = metrics.d2_absolute_error_score(Y_test, Y_pred)
-        print('D2 Absolut Error:', d2_absolute_error_score)
     except:
         d2_absolute_error_score = 'none'
 
@@ -64,11 +70,11 @@ def gradient_boosting():
     os.system(cmd_header)
     os.system(cmd_data)
 
-    try:
-        feature_imp = model.feature_importances_
-        feature_names = list(df.drop(drops, axis=1).columns[:])
-        Statistics.feature_importance(feature_names, feature_imp, 'Gradient Boosting Regressor')
-    except:
-        pass
+    # try:
+    #     feature_imp = model.feature_importances_
+    #     feature_names = list(df.drop(drops, axis=1).columns[:])
+    #     Statistics.feature_importance(feature_names, feature_imp, 'Gradient Boosting Regressor')
+    # except:
+    #     pass
 
 

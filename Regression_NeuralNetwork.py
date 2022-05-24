@@ -15,9 +15,18 @@ from sklearn import metrics
 import os
 
 
-def neural_network():
+def neural_network(min, max, n):
     df = dsc.ml_algo_selection('regression')
-    df = df.sample(1_000)
+    df = df[(df["fund_flow"] < max)]
+    df = df[(df["fund_flow"] > min)]
+    df = df.sample(n)
+
+    def scaling(x):
+        x = (2 * (x - min) / (max - min)) - 1
+        return x
+
+    df['fund_flow'] = df['fund_flow'].apply(scaling)
+
     col_len = len(df.drop(['fund_flow'], axis=1).columns[:])
 
     predictor = 'fund_flow'
@@ -61,8 +70,8 @@ def neural_network():
     # Statistics.loss_visualizer(train_loss, val_loss, len(hist.history['loss']))
     # Statistics.accuracy_visualizer(train_acc, val_acc, len(hist.history['loss']))
 
-    val_loss, val_acc = model.evaluate(X_test, Y_test)
-    print(f'loss: {val_loss}, acc: {val_acc}')
+    # val_loss, val_acc = model.evaluate(X_test, Y_test)
+    # print(f'loss: {val_loss}, acc: {val_acc}')
 
     model.predict(X_test)
     np.round(model.predict(X_test), 0)
@@ -76,13 +85,11 @@ def neural_network():
 
     try:
         explained_variance_score = metrics.explained_variance_score(Y_test, Y_pred)
-        print('Explained Variance:', explained_variance_score)
     except:
         explained_variance_score = 'none'
 
     try:
         d2_absolute_error_score = metrics.d2_absolute_error_score(Y_test, Y_pred)
-        print('D2 Absolut Error:', d2_absolute_error_score)
     except:
         d2_absolute_error_score = 'none'
 
