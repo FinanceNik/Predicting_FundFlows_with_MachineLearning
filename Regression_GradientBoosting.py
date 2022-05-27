@@ -64,7 +64,7 @@ def gradient_boosting(min, max, n):
     except:
         d2_absolute_error_score = 'none'
 
-    file_name = 'regression_metrics/regression_gradientBoosting.csv'
+    file_name = 'metrics/regression_gradientBoosting.csv'
     cmd_header = f'echo echo "mean_absolut_error,mean_squared_error,root_mean_squared_error,r2_score,explained_variance_score,d2_absolute_error_score" >> {file_name}'
     cmd_data = f'echo "{mean_absolute_error},{mean_squared_error},{root_mean_squared_error},{r2_score},{explained_variance_score},{d2_absolute_error_score}" >> {file_name}'
     os.system(cmd_header)

@@ -10,10 +10,16 @@ from tensorflow.keras.callbacks import EarlyStopping
 import DataSet_Cleaner as dsc
 import numpy as np
 import Statistics
-import pickle
 
 
 def neural_network_classification():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+
+
+    """
     df = dsc.ml_algo_selection('classifier')
     # df = df.sample(50_000)
     col_len = len(df.drop(['fund_flow'], axis=1).columns[:])
@@ -24,7 +30,7 @@ def neural_network_classification():
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.20, random_state=101)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
     scaler = MinMaxScaler()
     X_train = scaler.fit_transform(X_train)
@@ -56,8 +62,8 @@ def neural_network_classification():
     train_acc = hist.history['accuracy']
     val_acc = hist.history['val_accuracy']
 
-    # Statistics.loss_visualizer(train_loss, val_loss, len(hist.history['loss']))
-    # Statistics.accuracy_visualizer(train_acc, val_acc, len(hist.history['loss']))
+    Statistics.loss_visualizer(train_loss, val_loss, len(hist.history['loss']))
+    Statistics.accuracy_visualizer(train_acc, val_acc, len(hist.history['loss']))
 
     val_loss, val_acc = model.evaluate(X_test, Y_test)
     print(f'loss: {val_loss}, acc: {val_acc}')
@@ -71,7 +77,7 @@ def neural_network_classification():
 
     report = classification_report(Y_test, preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
-    # df.to_csv('report_nn.csv')
+    df.to_csv('nn_report.csv')
 
     try:
         feature_imp = model.feature_importances_
@@ -79,8 +85,3 @@ def neural_network_classification():
         Statistics.feature_importance(feature_names, feature_imp, 'Neural Net for Classification')
     except:
         pass
-
-
-# neural_network_classification()
-
-

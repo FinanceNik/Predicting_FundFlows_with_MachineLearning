@@ -1,7 +1,7 @@
 import pandas as pd
 import datetime as dt
 import DataSet_Cleaner as dsc
-import statsmodels.api as sm
+import statsmodels.api as sm  # the stats-model library is used for the regression functions.
 import warnings
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns', 500)
@@ -9,8 +9,31 @@ pd.set_option('display.max_rows', 500)
 pd.options.mode.chained_assignment = None  # default='warn'
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
+"""
+
+DESCRIPTION OF MODULE:
+------------------------------------------------------------------------------------------------------------------------
+
+This module is concerned with creating features (columns) that aid the machine learning algorithms in their predictive
+ability. Mainly, this module inserts the Fama French Factors into the panel dataset as well as calculates alpha and 
+beta for all of the funds included. 
+
+- Fetch the Fama French 3-Factor model factors and create a dataframe object out of them
+- Calculate rolling alpha and beta for the funds 
+- Lag all of the predicting variables 
+
+"""
+
 
 def get_fama_french_data():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Retrieving the Fama French factors from https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+    by using pandas datareader framework. In the end the dataset is returned as a dataframe object.
+
+    """
     import pandas_datareader.data as reader
 
     def transform_return_df():
@@ -30,6 +53,7 @@ def get_fama_french_data():
 
         return df_transposed
 
+    # The relevant timeframe used for the research in this paper.
     start = dt.date(2000, 1, 1)
     end = dt.date(2021, 12, 31)
 
@@ -41,13 +65,21 @@ def get_fama_french_data():
         col_popped = df_fama.pop(col)
         df.insert(0, col, col_popped.values)
 
-    df.to_csv('Alpha_Calculation_Dataset.csv')
-
     return df
 
 
-def calculate_alpha():
-    df = pd.read_csv('Alpha_Calculation_Dataset.csv')
+def calculate_alpha_and_beta():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    This function is the core of the alpha and beta calculation. Here, alpha and beta are estimated using a rolling
+    regression approach. Firstly, calculate the excess return of each fund for each period and then the alpha and beta
+    for each period. Only of a fund does not have any excess return data at a given point in time, do not calculate
+    alpha and beta.
+
+    """
+    df = get_fama_french_data()
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
     count_excess = 0
@@ -61,7 +93,6 @@ def calculate_alpha():
                     pass
         df.drop([fund], axis=1, inplace=True)
         count_excess = count_excess + 1
-        print(f" stage_excess --> {count_excess}")
 
     count_regression = 0
     for fund in df.columns[4:]:
@@ -78,15 +109,13 @@ def calculate_alpha():
             alpha = round(coeff[0], 8)  # Alpha for the whole period for fund_i
             beta = round(coeff[1], 8)  # Beta for the whole period for fund_i
 
-            df[f'{fund}_alpha'][i_row] = alpha
-            df[f'{fund}_beta'][i_row] = beta
+            df[f'{fund}_alpha'][i_row], df[f'{fund}_beta'][i_row] = alpha, beta
 
             if df[f"{fund}"][i_row] == 0:
                 df[f'{fund}_alpha'] = 0.0
                 df[f'{fund}_beta'] = 0.0
 
         count_regression = count_regression+1
-        print(f" stage_regression --> {count_regression}")
 
     include_cols = [i for i in list(df) if 'alpha' in i
                     or 'beta' in i
@@ -97,50 +126,55 @@ def calculate_alpha():
 
     df_final = df[include_cols]
 
-    df_final.to_csv('Alpha_AND_Beta_Calculation_Finalized.csv')
+    return df_final
 
 
-def create_alpha_df():
-    df = pd.read_csv('Alpha_AND_Beta_Calculation_Finalized.csv')
-    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
-    df.drop(list(df.filter(regex='beta')), axis=1, inplace=True)
+def create_alpha_and_beta_df():
+    """
 
-    df = df.fillna(0.0)
-    df = df.T
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Creating two separate datasets for alpha and beta values in order to transform and insert them into the main data-
+    frame in another function later.
 
-    df.insert(0, 'Name', '')
-    df['Name'] = df.index
-    df = df.reset_index()
+    """
+    df_alpha = calculate_alpha_and_beta()
+    df_alpha.drop(list(df_alpha.filter(regex='Unnamed')), axis=1, inplace=True)
+    df_alpha.drop(list(df_alpha.filter(regex='beta')), axis=1, inplace=True)
 
-    df.to_csv('alpha.csv')
+    df_alpha = df_alpha.fillna(0.0).T
 
-    return df
+    df_alpha.insert(0, 'Name', '')
+    df_alpha['Name'] = df_alpha.index
+    df_alpha = df_alpha.reset_index()
 
+    df_beta = calculate_alpha_and_beta()
+    df_beta.drop(list(df_beta.filter(regex='Unnamed')), axis=1, inplace=True)
+    df_beta.drop(list(df_beta.filter(regex='alpha')), axis=1, inplace=True)
 
-def create_beta_df():
-    df = pd.read_csv('Alpha_AND_Beta_Calculation_Finalized.csv')
-    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
-    df.drop(list(df.filter(regex='alpha')), axis=1, inplace=True)
+    df_beta = df_beta.fillna(0.0).T
 
-    df = df.fillna(0.0)
-    df = df.T
+    df_beta.insert(0, 'Name', '')
+    df_beta['Name'] = df_beta.index
+    df_beta = df_beta.reset_index()
 
-    df.insert(0, 'Name', '')
-    df['Name'] = df.index
-    df = df.reset_index()
-
-    df.to_csv('beta.csv')
-
-    return df
+    return df_alpha, df_beta
 
 
 def transform_alpha_AND_beta():
-    df = pd.read_csv('data/Morningstar_data_version_3.0.csv')
-    df_alpha = pd.read_csv('data/alpha.csv')
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    The alpha and beta dataframes are converted into panel data and inserted into the main dataset.
+
+    """
+    df = dsc.concat_maindf_and_expdf()  # the final panel dataset created in the DataSet_Cleaner module
+    df_alpha = create_alpha_and_beta_df()[0]
     df_alpha.drop(list(df_alpha.filter(regex='Unnamed')), axis=1, inplace=True)
     df_alpha = df_alpha.iloc[::-1]
     df_alpha = df_alpha.reset_index()
-    df_beta = pd.read_csv('data/beta.csv')
+    df_beta = create_alpha_and_beta_df()[1]
     df_beta.drop(list(df_beta.filter(regex='Unnamed')), axis=1, inplace=True)
     df_beta = df_beta.iloc[::-1]
     df_beta = df_beta.reset_index()
@@ -161,12 +195,19 @@ def transform_alpha_AND_beta():
     monthly_beta = df_beta_final.pop('monthly_beta')
     df.insert(1, 'monthly_beta', monthly_beta)
 
-    df.to_csv('data/Morningstar_data_version_4.0.csv')
+    return df
 
 
 def insert_factors():
-    # Insert the Fama-French 3 Factor Model Factors into the dataset.
-    df_factors = pd.read_csv('data/Alpha_Calculation_Dataset.csv')
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Converting the fama french factors into panel data and inserting them into the main dataset.
+
+    """
+    # Insert the Fama-French 3-Factor Model Factors into the dataset.
+    df_factors = calculate_alpha_and_beta()
     df_factors.drop(list(df_factors.filter(regex='Unnamed')), axis=1, inplace=True)
 
     list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
@@ -176,8 +217,6 @@ def insert_factors():
     df.drop(list(df_factors.filter(regex='Unnamed')), axis=1, inplace=True)
 
     df_factors = df_factors[['Mkt-RF', 'SMB', 'HML', 'RF']]
-
-    print(df_factors)
 
     df_factors.insert(1, 'Date', '')
 
@@ -214,10 +253,9 @@ def insert_factors():
             df[f'HML_{year}_{month}'] = float(df_factors.loc[df_factors['Date'] == f'{year}_{month}', 'HML'])
             df[f'RF_{year}_{month}'] = float(df_factors.loc[df_factors['Date'] == f'{year}_{month}', 'RF'])
 
-    list_cols_MKTRF = ['Name']
-    list_cols_SMB = ['Name']
-    list_cols_HML = ['Name']
-    list_cols_RF = ['Name']
+    # Because the fund name also has to be included as an identifier, it is added as the first element to each list.
+    list_cols_MKTRF, list_cols_SMB, list_cols_HML, list_cols_RF = ['Name'], ['Name'], ['Name'], ['Name']
+
     for year in list_years:
         for month in list_months:
             list_cols_MKTRF.append(f'Mkt-RF_{year}_{month}')
@@ -225,6 +263,7 @@ def insert_factors():
             list_cols_HML.append(f'HML_{year}_{month}')
             list_cols_RF.append(f'RF_{year}_{month}')
 
+    # Converting all the separate dataframes into panel data in order to insert them into the main dataframe.
     df_mktrf = pd.melt(frame=df[list_cols_MKTRF], id_vars=['Name'], var_name="year-month", value_name='mktrf')
     df_mktrf.drop(['year-month'], axis=1, inplace=True)
     
@@ -237,31 +276,35 @@ def insert_factors():
     df_rf = pd.melt(frame=df[list_cols_RF], id_vars=['Name'], var_name="year-month", value_name='rf')
     df_rf.drop(['year-month'], axis=1, inplace=True)
 
-    mktrf = df_mktrf.pop('mktrf')
-    smb = df_smb.pop('smb')
-    hml = df_hml.pop('hml')
-    rf = df_rf.pop('rf')
+    mktrf, smb, hml, rf = df_mktrf.pop('mktrf'), df_smb.pop('smb'), df_hml.pop('hml'), df_rf.pop('rf')
 
-    df_final = pd.read_csv('data/Morningstar_data_version_4.0.csv')
+    df_final = transform_alpha_AND_beta()
 
     df_final.insert(1, 'mktrf', mktrf)
     df_final.insert(1, 'smb', smb)
     df_final.insert(1, 'hml', hml)
     df_final.insert(1, 'rf', rf)
 
-    # df_final.to_csv('data/Morningstar_data_version_5.0.csv')
+    return df_final
 
 
-def lag_or_lead():
-    df = pd.read_csv('data/Morningstar_data_version_5.0.csv')
+def lag_vars():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    The last step in order to finalize the dataset is to lag all the predicting variables.
+
+    """
+    df = insert_factors()
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
     df['fund_flow'] = df['fund_flow'].shift(7345)
 
     df = df.fillna(0.0)
-    df.to_csv('data/Morningstar_data_version_5.0_lagged.csv')
+    df.to_csv('data/Morningstar_data_version_5.0_lagged.csv')  # the very final dataset used for the ML algos
 
 
-lag_or_lead()
+
 
 
 

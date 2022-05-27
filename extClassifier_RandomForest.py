@@ -5,11 +5,17 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from sklearn.model_selection import GridSearchCV
 import Statistics
-import pickle
 import DataSet_Cleaner as dsc
 
 
 def random_forrest():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+
+
+    """
     df = dsc.ml_algo_selection('extended_classifier')
     df = df.sample(500_000)
 
@@ -29,8 +35,8 @@ def random_forrest():
     model.fit(X_train, Y_train)
 
     # save the model to disk
-    filename = 'ext_rf_model.sav'
-    pickle.dump(model, open(filename, 'wb'))
+    # filename = 'ext_rf_model.sav'
+    # pickle.dump(model, open(filename, 'wb'))
 
     # # retrieve the model
     # model = pickle.load(open(filename, 'rb'))
@@ -38,23 +44,23 @@ def random_forrest():
     Y_pred = model.predict(X_test)
     accu = accuracy_score(Y_test, Y_pred)
     conf_matrix = confusion_matrix(Y_test, Y_pred)
-    report = classification_report(Y_test, Y_pred, output_dict=False)  # has to be true for .csv conversion
+    report = classification_report(Y_test, Y_pred, output_dict=True)  # has to be true for .csv conversion
     feature_imp = model.feature_importances_
 
     feature_names = list(df.drop(drops, axis=1).columns[:])
 
-    # Statistics.feature_importance(feature_names, feature_imp, 'Extended Random Forest Classifier')
-    # Statistics.confusion_matrix(conf_matrix, 'Extended Random Forest Classifier')
+    Statistics.feature_importance(feature_names, feature_imp, 'Extended Random Forest Classifier')
+    Statistics.confusion_matrix(conf_matrix, 'Extended Random Forest Classifier')
 
-    # df = pd.DataFrame(report).transpose()
-    #
-    # df.to_csv('ext_rf_report.csv')
+    df = pd.DataFrame(report).transpose()
+
+    df.to_csv('ext_rf_report.csv')
 
     print(accu)
     print(report)
 
 
-# random_forrest()
+random_forrest()
 
 
 def random_forrest2():
@@ -66,7 +72,7 @@ def random_forrest2():
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.25, random_state=None)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.25, random_state=42)
 
     scaler = MinMaxScaler()
     X_train = scaler.fit_transform(X_train)

@@ -20,7 +20,7 @@ def random_forrest():
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=None)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     scaler = MinMaxScaler()
     X_train = scaler.fit_transform(X_train)
@@ -49,7 +49,7 @@ def random_forrest():
 
     df = pd.DataFrame(report).transpose()
 
-    df.to_csv('report.csv')
+    df.to_csv('rf_report.csv')
 
     print(accu)
 
