@@ -95,14 +95,22 @@ def count_fund_flow_values():
 
 
 def distribution_fund_flows():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Plot the distribution of fund flows with log scale in order to show the heterogeneity of fund flows.
+
+    """
     df = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
     df = df.rename(columns={'fund_flow': 'Fund Flow'})
 
+    # Because the fund flows are so extremely diverse, it was hard to visualize them and hence boundaries had to be set.
     df = df[(df["Fund Flow"] > -100_000)]
     df = df[(df["Fund Flow"] < 100_000)]
 
-    sns.histplot(data=df, x='Fund Flow', bins=30000, log_scale=False, kde=True, alpha=0.6)
+    sns.histplot(data=df, x='Fund Flow', bins=30000, log_scale=True, kde=True, alpha=0.6)  # log_scale = True
     plt.ylim(0, 110)
     plt.title('Log. Fund Flow Distribution in USD', fontsize=24)
     plt.xticks(fontsize=18)
@@ -113,19 +121,30 @@ def distribution_fund_flows():
 
 
 def average_fund_flow_per_year():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Create the visualization that shows both, the average fund flow per year over the whole horizon of the dataset, and
+    the average fund flow over the whole horizon.
+
+    """
     df = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
     df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]
     df['fund_flow'] = df['fund_flow'] / 1_000_000_000
 
+    # Loop over all the years between 2000 and 2022 and calculate the mean fund flow per year.
     list_years = list(range(2000, 2022))
     list_ff = []
     for year in list_years:
         value = int(round(df.loc[df['year'] == year, 'fund_flow'].sum(), 0))
         list_ff.append(value)
     mean = round(sum(list_ff) / len(list_ff), 0)
-    print(mean)
+
+    # Calculate the mean for the whole time horizon via list comprehension.
     mean_list = [mean for x in range(len(list_ff))]
+
     plt.grid(alpha=0.6)
     plt.bar(list_years, list_ff, color='#3072a1', alpha=0.99)
     plt.plot(list_years, mean_list, color='#ffa412', alpha=0.99, linewidth=5)
@@ -139,16 +158,26 @@ def average_fund_flow_per_year():
 
 
 def count_morningstar_cate():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Count the number of funds within each Morningstar category.
+
+    """
     df = pd.read_csv('data/Morningstar_data_version_5.0.csv')
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
     df_ia = df.filter(regex='Morningstar Category_')
     cols = list(df_ia.filter(regex='Morningstar Category').columns[:])
     counts = []
-    for k in cols:
-        value = int(df[k].sum() / 264)
+    for i in cols:
+        # dividing by 264, because due to the panel data structure all funds are multiplied by 12 months * 22 years.
+        value = int(df[i].sum() / 264)
         counts.append(value)
 
+    # Because the name of the Morningstar category in the dataset always begins with 'Morningstar_?', we split at the
+    # '_' character to have a more visually appealing graph.
     cols = [x.split('_')[1] for x in cols]
 
     plt.figure(figsize=(20, 18))
@@ -165,6 +194,14 @@ def count_morningstar_cate():
 
 
 def expense_ratio_to_year():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Plot the expense ratio development over the years. In order to do that, however, one has to convert the monthly
+    expense ratio to a yearly one.
+
+    """
     df = dsc.reconvert_dummies()
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
@@ -172,10 +209,8 @@ def expense_ratio_to_year():
     df = df[(df["monthly_exp"] > 0)]
     df['monthly_exp'] = df["monthly_exp"] * 12
 
-    # print(df.columns[:])
-
-    y = df['monthly_exp'][:]
-    x = df['year'][:]
+    y = df['monthly_exp']
+    x = df['year']
 
     sns.set(font_scale=1.3)
     plot = sns.jointplot(data=df, x=x, y=y, kind='reg', line_kws={"color": "#ffa412"})
@@ -187,21 +222,35 @@ def expense_ratio_to_year():
 
 
 def fund_flow_to_expense():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Visualize the relationship between the expense ratio to the fund flow. Does the expense ratio influence fund flows
+    at all?
+
+    """
     df = dsc.reconvert_dummies()
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
-    df = df.fillna(0.0)
-    df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]
-    df = df[(df["fund_flow"] > -8_000_0) | (df["fund_flow"] < 8_000_0)]
-    df = df[(df["fund_flow"] < -10000)]
-    df = df[(df["fund_flow"] > -1000000)]
+    df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]  # no need for plotting flows if they have not occurred.
+
+    # To have a less cluttered and more meaningful interpretation of the plot, the far-ends of the fund flows are cut
+    # off.
+    df = df[(df["fund_flow"] < -1_000_000)]
+    df = df[(df["fund_flow"] > -1_000_000)]
+
+    # Monthly expense ratio is again converted to a yearly one.
     df['monthly_exp'] = df["monthly_exp"] * 12
+
+    # Here too, cutting of the far-ends of the expense ratios.
     df = df[(df["monthly_exp"] < 4)]
     df = df[(df["monthly_exp"] > 0)]
 
+    # Because the plot is uninterpretable with all >1 million observations, a random sample of 100 thousand is taken.
     df = df.sample(n=100_000)
 
-    y = df['fund_flow'][:]
-    x = df['monthly_exp'][:]
+    y = df['fund_flow']
+    x = df['monthly_exp']
 
     sns.set(rc={'figure.figsize': (25, 15)})
     sns.set(font_scale=1.3)
@@ -211,18 +260,22 @@ def fund_flow_to_expense():
     plt.title('Expense Ratio to Fund Flow', y=1.2, x=-3, fontsize=22)
     plot.ax_joint.set_xlabel('Expense Ratio in Percent', fontsize=18)
     plot.ax_joint.set_ylabel('Monthly Fund Flow', fontsize=18)
-    # plt.savefig('xx.png', dpi=500)
     plt.show()
 
 
 def fund_flow_to_mgmt_expense():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    The same procedure as has been conducted in the visualization above, only that this is a different expense variable.
+
+    """
     df = dsc.reconvert_dummies()
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
-    df = df.fillna(0.0)
     df = df[(df["fund_flow"] > 0) | (df["fund_flow"] < 0)]
-    df = df[(df["fund_flow"] > -8_000_0) | (df["fund_flow"] < 8_000_0)]
-    df = df[(df["fund_flow"] < 10_000_000)]
-    df = df[(df["fund_flow"] > 10000)]
+    df = df[(df["fund_flow"] < 1_000_000)]
+    df = df[(df["fund_flow"] > 1_000_000)]
 
     df = df.sample(n=100_000)
 
@@ -237,17 +290,24 @@ def fund_flow_to_mgmt_expense():
     plt.title('Management Fee to Fund Flow', y=1.2, x=-3, fontsize=22)
     plot.ax_joint.set_xlabel('Management Fee in Percent', fontsize=18)
     plot.ax_joint.set_ylabel('Monthly Fund Flow', fontsize=18)
-    # plt.savefig('xx.png', dpi=500)
     plt.show()
 
 
 def feature_importance(x, y, model):
+    """
 
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Creating a function that is modular and can be used for multiple models. The purpose of this function is to plot
+    the 20 most important features of a machine learning model in order to give the reader more insight into the
+    decision-making process of the model.
+
+    """
     df = pd.DataFrame(list(zip(x, y)), columns=['Name', 'Value'])
     df = df.sort_values('Value', ascending=True)
     df = df.reset_index()
     df.drop(['index'], axis=1, inplace=True)
-    df = df[-20:]
+    df = df[-20:]  # Only take the most important 20 variables.
 
     plt.figure(figsize=(20, 20))
     plt.grid(alpha=0.6)
@@ -264,6 +324,14 @@ def feature_importance(x, y, model):
 
 
 def confusion_matrix(matrix, model):
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Creating a function that is modular and can be used for multiple models. The purpose of this function is to create
+    a confusion matrix for the classification ML models.
+
+    """
     ax = sns.heatmap(matrix, annot=True, cmap='Blues')
     ax.set_title(f'Confusion Matrix for {model} Model\n', fontsize=26)
     plt.xticks(fontsize=18)
@@ -274,6 +342,13 @@ def confusion_matrix(matrix, model):
 
 
 def loss_visualizer(train_loss, val_loss, epochs):
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Visualizing the loss function of a neural network to briefly see whether it is a good model or not.
+
+    """
     plt.plot(range(1, epochs+1), train_loss, label='Training loss')
     plt.plot(range(1, epochs+1), val_loss, label='validation loss')
     plt.title('Training and Validation loss\n', fontsize=26)
@@ -287,6 +362,13 @@ def loss_visualizer(train_loss, val_loss, epochs):
 
 
 def accuracy_visualizer(train_acc, val_acc, epochs):
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    Visualizing the accuracy function of a neural network to briefly see whether it is a good model or not.
+
+    """
     plt.plot(range(1, epochs+1), train_acc, label='Training accuracy')
     plt.plot(range(1, epochs+1), val_acc, label='validation accuracy')
     plt.title('Training and Validation accuracy\n', fontsize=26)

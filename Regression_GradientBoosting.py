@@ -13,20 +13,34 @@ from sklearn import metrics
 import os
 
 
-def gradient_boosting(min, max, n):
-    df = dsc.ml_algo_selection('regression')
-    df = df[(df["fund_flow"] < max)]
-    df = df[(df["fund_flow"] > min)]
-    df = df.sample(n)
+def gradient_boosting_for_regression(min, max, n):
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    This is the machine learning gradient boosting model used for the prediction of the actual values of the future fund
+    flows. The [min, max, n] arguments stand for:
+                                                  - minimum fund flow to be included
+                                                  - maximum fund flow to be included
+                                                  - number of the sample size
+    These limitations are necessary because the fund flow variance is too high and the models give horrible
+    predictions. Hence, in order to homogenize the data a bit, the outliers are excluded. The number of samples had to
+    be given for testing purposes, as running the algo for testing on the whole dataset is time costly.
+
+    """
+    df = dsc.ml_algo_selection('regression')  # Calling the regression type of the dataset
+    df = df[(df["fund_flow"] < max)]  # applying the maximum filter
+    df = df[(df["fund_flow"] > min)]  # applying the minimum filter
+    df = df.sample(n)  # taking a number of samples according to the n defined
 
     def scaling(x):
         x = (2 * (x - min) / (max - min)) - 1
         return x
 
-    df['fund_flow'] = df['fund_flow'].apply(scaling)
+    df['fund_flow'] = df['fund_flow'].apply(scaling)  # applying the -1 to 1 scaling function on the fund flows
 
-    predictor = 'fund_flow'
-    drops = [predictor]
+    predictor = 'fund_flow'  # predicting fund flows
+    drops = [predictor]  # dropping fund flows
 
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
@@ -41,28 +55,14 @@ def gradient_boosting(min, max, n):
                                        validation_fraction=0.1, n_iter_no_change=20, max_features='log2', verbose=1)
     model.fit(X_train, Y_train)
 
-    filename = 'gb_reg_model.sav'
-    pickle.dump(model, open(filename, 'wb'))
-
-    # # retrieve the model
-    # model = pickle.load(open(filename, 'rb'))
-
     Y_pred = model.predict(X_test)
 
     mean_absolute_error = metrics.mean_absolute_error(Y_test, Y_pred)
     mean_squared_error = metrics.mean_squared_error(Y_test, Y_pred)
     root_mean_squared_error = np.sqrt(metrics.mean_squared_error(Y_test, Y_pred))
     r2_score = metrics.r2_score(Y_test, Y_pred)
-
-    try:
-        explained_variance_score = metrics.explained_variance_score(Y_test, Y_pred)
-    except:
-        explained_variance_score = 'none'
-
-    try:
-        d2_absolute_error_score = metrics.d2_absolute_error_score(Y_test, Y_pred)
-    except:
-        d2_absolute_error_score = 'none'
+    explained_variance_score = metrics.explained_variance_score(Y_test, Y_pred)
+    d2_absolute_error_score = metrics.d2_absolute_error_score(Y_test, Y_pred)
 
     file_name = 'metrics/regression_gradientBoosting.csv'
     cmd_header = f'echo echo "mean_absolut_error,mean_squared_error,root_mean_squared_error,r2_score,explained_variance_score,d2_absolute_error_score" >> {file_name}'
@@ -70,11 +70,11 @@ def gradient_boosting(min, max, n):
     os.system(cmd_header)
     os.system(cmd_data)
 
-    # try:
-    #     feature_imp = model.feature_importances_
-    #     feature_names = list(df.drop(drops, axis=1).columns[:])
-    #     Statistics.feature_importance(feature_names, feature_imp, 'Gradient Boosting Regressor')
-    # except:
-    #     pass
+    try:
+        feature_imp = model.feature_importances_
+        feature_names = list(df.drop(drops, axis=1).columns[:])
+        Statistics.feature_importance(feature_names, feature_imp, 'Gradient Boosting Regressor')
+    except:
+        pass
 
 

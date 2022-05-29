@@ -4,7 +4,6 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 import tensorflow as tf
-from matplotlib import pyplot as plt
 import pandas as pd
 from tensorflow.keras.callbacks import EarlyStopping
 import DataSet_Cleaner as dsc
@@ -17,19 +16,19 @@ def neural_network_classification():
 
     DESCRIPTION:
     --------------------------------------------------------------------------------------------------------------------
-
+    This is the neural network module used for the binary classification.
 
     """
-    df = dsc.ml_algo_selection('classifier')
-    # df = df.sample(50_000)
+    df = dsc.ml_algo_selection('classifier')  # Calling binary classification variant of the dataset.
     col_len = len(df.drop(['fund_flow'], axis=1).columns[:])
 
-    predictor = 'fund_flow'
+    predictor = 'fund_flow'  # of course, the goal is to predict fund flows.
     drops = [predictor]
 
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
 
+    # Splitting the test and the training dataset in order to eliminate bias.
     X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
     scaler = MinMaxScaler()
@@ -50,7 +49,7 @@ def neural_network_classification():
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     es = EarlyStopping(monitor='val_accuracy',
-                       mode='max',  # don't minimize the accuracy!
+                       mode='max',
                        patience=8,
                        restore_best_weights=True)
 
@@ -71,14 +70,18 @@ def neural_network_classification():
     model.predict(X_test)
     np.round(model.predict(X_test), 0)
 
-    preds = np.round(model.predict(X_test), 0)
+    preds = np.round(model.predict(X_test), 0)  # rounding the values for better visualization
 
+    # Calling the confusion matrix function.
     Statistics.confusion_matrix(confusion_matrix(Y_test, preds), 'Neural Network Classification')
 
+    # Creating the classification report.
     report = classification_report(Y_test, preds, output_dict=True)
     df = pd.DataFrame(report).transpose()
     df.to_csv('nn_report.csv')
 
+    # The feature importance cannot be visualized for neural networks, unfortunately. It was tried anyway and put inside
+    # a try-and-except statement so the module does not throw an error and stop.
     try:
         feature_imp = model.feature_importances_
         feature_names = list(df.drop(drops, axis=1).columns[:])

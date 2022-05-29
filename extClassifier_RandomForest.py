@@ -8,23 +8,23 @@ import Statistics
 import DataSet_Cleaner as dsc
 
 
-def random_forrest():
+def random_forrest_extended_classification():
     """
 
     DESCRIPTION:
     --------------------------------------------------------------------------------------------------------------------
-
+    This module inherits the gradient boosting algorithm for the extended classification.
 
     """
-    df = dsc.ml_algo_selection('extended_classifier')
-    df = df.sample(500_000)
+    df = dsc.ml_algo_selection('extended_classifier')  # Retrieving the dataset for the extended classification
 
-    predictor = 'fund_flow'
+    predictor = 'fund_flow'  # Again, predicting fund flows
     drops = [predictor]
 
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
 
+    # Splitting the training and the testing data to eliminate bias.
     X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=None)
 
     scaler = MinMaxScaler()
@@ -34,37 +34,34 @@ def random_forrest():
     model = RandomForestClassifier(verbose=1, n_jobs=1, n_estimators=100)
     model.fit(X_train, Y_train)
 
-    # save the model to disk
-    # filename = 'ext_rf_model.sav'
-    # pickle.dump(model, open(filename, 'wb'))
-
-    # # retrieve the model
-    # model = pickle.load(open(filename, 'rb'))
-
     Y_pred = model.predict(X_test)
     accu = accuracy_score(Y_test, Y_pred)
     conf_matrix = confusion_matrix(Y_test, Y_pred)
     report = classification_report(Y_test, Y_pred, output_dict=True)  # has to be true for .csv conversion
+
     feature_imp = model.feature_importances_
-
     feature_names = list(df.drop(drops, axis=1).columns[:])
-
     Statistics.feature_importance(feature_names, feature_imp, 'Extended Random Forest Classifier')
     Statistics.confusion_matrix(conf_matrix, 'Extended Random Forest Classifier')
 
     df = pd.DataFrame(report).transpose()
-
     df.to_csv('ext_rf_report.csv')
 
     print(accu)
-    print(report)
 
 
-random_forrest()
+random_forrest_extended_classification()
 
 
-def random_forrest2():
-    df = dsc.ml_algo_selection('classifier')
+def random_forrest_extended_classification_hyperparameter_tuning():
+    """
+
+    DESCRIPTION:
+    --------------------------------------------------------------------------------------------------------------------
+    This module is used for the tuning of the hyperparameters of the random forest algorithm.
+
+    """
+    df = dsc.ml_algo_selection('extended_classifier')  # retrieving the extended classification dataset.
 
     predictor = 'fund_flow'
     drops = [predictor]
@@ -106,4 +103,5 @@ def random_forrest2():
         "Imp": importance
     })
     print(imp_df.sort_values(by="Imp", ascending=False))
+
 
