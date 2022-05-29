@@ -1,2 +1,6 @@
 *.csv
 *.sav
+data/*
+venv/*
+.idea/*
+__pycashe__/*
