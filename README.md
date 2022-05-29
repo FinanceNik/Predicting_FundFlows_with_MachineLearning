@@ -1,3 +1,4 @@
+![](https://github.com/FinanceNik/Predicting_FundFlows_with_MachineLearning/blob/master/Screenshot%20from%202022-05-29%2015-23-25.png)
 ## HSLU MSc B&F - Module 12 - Masters Thesis
 ### Author: Niklas Clasen
 #### Due Date: June 3rd 2022
