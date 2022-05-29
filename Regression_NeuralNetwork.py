@@ -41,8 +41,8 @@ def neural_network(min, max, n):
     predictor = 'fund_flow'  # predicting fund flows
     drops = [predictor]  # dropping fund flows from the predictor set
 
-    X = df.drop(drops, axis=1).values
-    y = df[predictor].values
+    X = df.drop(drops, axis=1).values  # predictors
+    y = df[predictor].values  # predicted
 
     # Splitting the dataset into training and test data
     X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.20, random_state=101)
@@ -72,23 +72,29 @@ def neural_network(min, max, n):
                        patience=8,
                        restore_best_weights=True)
 
+    # Fitting the data to the model and training it
     hist = model.fit(x=X_train, y=Y_train, callbacks=[es], batch_size=10,
                      epochs=epochs, validation_data=(X_test, Y_test), verbose=1)
 
+    # Different metrics by which neural networks are to be evaluated graphically
     train_loss = hist.history['loss']
     val_loss = hist.history['val_loss']
     train_acc = hist.history['accuracy']
     val_acc = hist.history['val_accuracy']
 
+    # Calling the visualizing functions that show graphically whether the neural network is fitted well or not
     Statistics.loss_visualizer(train_loss, val_loss, len(hist.history['loss']))
     Statistics.accuracy_visualizer(train_acc, val_acc, len(hist.history['loss']))
 
+    # Quick terminal output check of whether the accuracy of the model is acceptable
     val_loss, val_acc = model.evaluate(X_test, Y_test)
     print(f'loss: {val_loss}, acc: {val_acc}')
 
+    # Let the model predict the test values then round the numbers.
     model.predict(X_test)
     np.round(model.predict(X_test), 0)
 
+    # Measure by which the model's metrics below are evaluated
     Y_pred = np.round(model.predict(X_test), 0)
 
     # Evaluation metrics that are saved to a .csv file written through a command line argument.

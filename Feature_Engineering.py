@@ -57,6 +57,7 @@ def get_fama_french_data():
     start = dt.date(2000, 1, 1)
     end = dt.date(2021, 12, 31)
 
+    # Instantiating the reader class so that pandas can access the fama-french factors from the above-mentioned URL
     df_fama = reader.DataReader('F-F_Research_Data_Factors', 'famafrench', start, end)[0]
     df = transform_return_df()
 
@@ -65,7 +66,7 @@ def get_fama_french_data():
         col_popped = df_fama.pop(col)
         df.insert(0, col, col_popped.values)
 
-    return df
+    return df  # returning the dataframe with the fama-french factors
 
 
 def calculate_alpha_and_beta():
@@ -126,7 +127,7 @@ def calculate_alpha_and_beta():
 
     df_final = df[include_cols]
 
-    return df_final
+    return df_final  # returning the finalized dataframe object
 
 
 def create_alpha_and_beta_df():
@@ -278,12 +279,12 @@ def insert_factors():
 
     mktrf, smb, hml, rf = df_mktrf.pop('mktrf'), df_smb.pop('smb'), df_hml.pop('hml'), df_rf.pop('rf')
 
-    df_final = transform_alpha_AND_beta()
+    df_final = transform_alpha_AND_beta()  # the final dataset established before, only without FF factors
 
-    df_final.insert(1, 'mktrf', mktrf)
-    df_final.insert(1, 'smb', smb)
-    df_final.insert(1, 'hml', hml)
-    df_final.insert(1, 'rf', rf)
+    df_final.insert(1, 'mktrf', mktrf)  # insert the market-risk-premium variable into the final dataset
+    df_final.insert(1, 'smb', smb)  # insert the small-minus-big factor variable into the final dataset
+    df_final.insert(1, 'hml', hml)  # insert the high-minus-low variable into the final dataset
+    df_final.insert(1, 'rf', rf)  # insert the risk-free rate  variable into the final dataset
 
     return df_final
 
@@ -298,10 +299,11 @@ def lag_vars():
     """
     df = insert_factors()
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
+    # the lag number is 7345 because since the dataframe is already converted to panel data, every fund occurs at
+    # exactly the 7345th x interval.
     df['fund_flow'] = df['fund_flow'].shift(7345)
 
-    df = df.fillna(0.0)
-    df.to_csv('data/Morningstar_data_version_5.0_lagged.csv')  # the very final dataset used for the ML algos
+    df.to_csv('data/Morningstar_data_version_5.0_lagged.csv')  # saving the very final dataset used for the ML algos
 
 
 

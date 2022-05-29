@@ -24,22 +24,22 @@ def random_forrest_regressor(min, max, n):
 
     """
     df = dsc.ml_algo_selection('regression')
-    df = df[(df["fund_flow"] < max)]
-    df = df[(df["fund_flow"] > min)]
-    df = df.sample(n)
+    df = df[(df["fund_flow"] < max)]  # maximum fund flow value to be included
+    df = df[(df["fund_flow"] > min)]  # minimum fund flow value to be included
+    df = df.sample(n)  # sample size to be used
 
     # Scaling the fund flows from -1 to 1 according to the practice described in the paper.
     def scaling(x):
-        x = (2 * (x - min) / (max - min)) - 1
+        x = (2 * (x - min) / (max - min)) - 1  # mathematical scaling function
         return x
 
-    df['fund_flow'] = df['fund_flow'].apply(scaling)
+    df['fund_flow'] = df['fund_flow'].apply(scaling)  # applying the scaling
 
     predictor = 'fund_flow'  # predicting fund flows of course
-    drops = [predictor]
+    drops = [predictor]  # dropping fund flow from the predictors
 
-    X = df.drop(drops, axis=1).values
-    y = df[predictor].values
+    X = df.drop(drops, axis=1).values  # predicting variables
+    y = df[predictor].values  # predictor variable
 
     # decreasing bias through splitting of test and training data.
     X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=None)
@@ -49,6 +49,7 @@ def random_forrest_regressor(min, max, n):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
+    # Calling the model and fitting the training data to it
     model = RandomForestRegressor(verbose=1, n_jobs=10, n_estimators=1000)
     model.fit(X_train, Y_train)
 
@@ -87,10 +88,10 @@ def random_forrest_regressor_hyperparameter_tuning(min, max, n):
     This module is used for the tuning of the hyperparameters of the random forest algorithm for regression purposes.
 
     """
-    df = dsc.ml_algo_selection('regression')
-    df = df[(df["fund_flow"] < max)]
-    df = df[(df["fund_flow"] > min)]
-    df = df.sample(n)
+    df = dsc.ml_algo_selection('regression')  # retrieving the correct dataset for regression
+    df = df[(df["fund_flow"] < max)]  # maximum fund flow value to be included
+    df = df[(df["fund_flow"] > min)]  # minimum fund flow value to be included
+    df = df.sample(n)  # sample size to be used
 
     # Scaling the fund flows from -1 to 1 according to the practice described in the paper.
     def scaling(x):
@@ -114,18 +115,21 @@ def random_forrest_regressor_hyperparameter_tuning(min, max, n):
     model = RandomForestRegressor(verbose=1, n_jobs=10, n_estimators=1000)
     model.fit(X_train, Y_train)
 
+    # The parameters that are to be tested
     params = {
         'max_depth': [2, 3, 5, 10, 20],
         'min_samples_leaf': [5, 10, 20, 50, 100, 200],
         'n_estimators': [10, 25, 30, 50, 100, 200]
     }
 
+    # calling the grid search cross validation function
     grid_search = GridSearchCV(estimator=model,
                                param_grid=params,
                                cv=4, verbose=1, scoring="accuracy")
-
+    # Fitting the training data to the grid search cv algorithm
     grid_search.fit(X_train, Y_train)
 
+    # Show the best parameters
     print(grid_search.best_params_)
     grid_predictions = grid_search.predict(X_test)
     print(grid_predictions)
