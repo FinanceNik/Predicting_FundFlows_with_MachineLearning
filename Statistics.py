@@ -1,9 +1,9 @@
-import pandas as pd
+import pandas as pd  # for working with dataframes
 import numpy as np  # data manipulation and algebra library
 import seaborn as sns  # plotting library for data visualizations building on matplotlib
 from matplotlib import pyplot as plt  # main plotting library of python
 import warnings
-import DataSet_Cleaner as dsc
+import DataSet_Cleaner as dsc  # retrieving the dataset
 pd.options.mode.chained_assignment = None
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
@@ -305,13 +305,13 @@ def feature_importance(x, y, model):
     """
     df = pd.DataFrame(list(zip(x, y)), columns=['Name', 'Value'])
     df = df.sort_values('Value', ascending=True)
-    df = df.reset_index()
+    df = df.reset_index()  # resetting the index to be able to use it in the plot.
     df.drop(['index'], axis=1, inplace=True)
     df = df[-20:]  # Only take the most important 20 variables.
 
     plt.figure(figsize=(20, 20))
     plt.grid(alpha=0.6)
-    plt.barh(df['Name'], df['Value'], color='#3072a1', alpha=0.99)
+    plt.barh(df['Name'], df['Value'], color='#3072a1', alpha=0.99)  # Plot the horizontal bar graph.
     plt.title(f'Feature Importance of {model} Model\n', fontsize=26)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)

@@ -112,5 +112,7 @@ def neural_network(min, max, n):
     os.system(cmd_data)
 
 
+neural_network(-10_000_000, 10_000_000, 1_000_000)
+
 
 

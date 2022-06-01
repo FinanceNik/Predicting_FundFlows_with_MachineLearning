@@ -1,13 +1,13 @@
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import GridSearchCV
-import Statistics
-import DataSet_Cleaner as dsc
-import numpy as np
-from sklearn import metrics
-import os
+from sklearn.model_selection import train_test_split  # split data into train and test
+from sklearn.metrics import r2_score  # R-squared score for regression
+from sklearn.preprocessing import MinMaxScaler  # scale data according to min and max values
+from sklearn.ensemble import GradientBoostingRegressor  # Gradient Boosting Regression model used
+from sklearn.model_selection import GridSearchCV  # Grid Search for hyperparameter tuning
+import Statistics  # for the visualization function coded in that module
+import DataSet_Cleaner as dsc  # retrieving the correct data set
+import numpy as np  # for rounding values
+from sklearn import metrics  # evaluation metrics for regression models
+import os  # used for writing data to files using a command line execution
 
 
 def gradient_boosting_for_regression(min, max, n):

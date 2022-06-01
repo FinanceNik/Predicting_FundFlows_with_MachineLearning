@@ -1,4 +1,4 @@
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report  # for classification report
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder  # tested various scaler
 from sklearn.model_selection import train_test_split  # for splitting the data into train and test data
 from tensorflow.keras import Sequential  # the model used

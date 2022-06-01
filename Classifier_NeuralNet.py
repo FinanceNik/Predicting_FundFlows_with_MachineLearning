@@ -1,14 +1,14 @@
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-import tensorflow as tf
-import pandas as pd
-from tensorflow.keras.callbacks import EarlyStopping
-import DataSet_Cleaner as dsc
-import numpy as np
-import Statistics
+from sklearn.model_selection import train_test_split  # for splitting data into train and test sets
+from sklearn.metrics import classification_report, confusion_matrix  # for evaluating the conf. matrix and class. report
+from sklearn.preprocessing import MinMaxScaler  # scaling the data
+from tensorflow.keras import Sequential  # the model used in the Neural Network
+from tensorflow.keras.layers import Dense, Dropout  # The layers of the model used
+import tensorflow as tf  # for the GPU and calling the flattening function
+import pandas as pd  # for the dataframe object that is saving the classification report
+from tensorflow.keras.callbacks import EarlyStopping  # for early stopping the model if overtraining is detected
+import DataSet_Cleaner as dsc  # retrieving the correct dataset
+import Statistics  # Visualization functions
+import numpy as np  # for the rounding values of the confusion matrix and the classification report
 
 
 def neural_network_classification():
@@ -31,12 +31,15 @@ def neural_network_classification():
     # Splitting the test and the training dataset in order to eliminate bias.
     X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
+    # Scaling the data.
     scaler = MinMaxScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    epochs = 80
+    # Defining the number of epochs. Will be stopped by early stopping, hence number can be very high.
+    epochs = 800
 
+    # Creating the model and adding the layers.
     model = Sequential()
     model.add(tf.keras.layers.Flatten())
     model.add(Dense(col_len, input_shape=(X.shape[1],), activation='relu'))  # 128 is best atm. && include input_shape argument
@@ -48,25 +51,30 @@ def neural_network_classification():
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+    # Early stopping for overfitting.
     es = EarlyStopping(monitor='val_accuracy',
                        mode='max',
                        patience=8,
                        restore_best_weights=True)
-
+    # Fitting the modela and determine the parameters of the model.
     hist = model.fit(x=X_train, y=Y_train, callbacks=[es], batch_size=10,
                      epochs=epochs, validation_data=(X_test, Y_test), verbose=1)  # include batch size
 
+    # Evaluating the model visually.
     train_loss = hist.history['loss']
     val_loss = hist.history['val_loss']
     train_acc = hist.history['accuracy']
     val_acc = hist.history['val_accuracy']
 
+    # Visualizing the training and validation loss.
     Statistics.loss_visualizer(train_loss, val_loss, len(hist.history['loss']))
     Statistics.accuracy_visualizer(train_acc, val_acc, len(hist.history['loss']))
 
+    # Show basic metrics quickly in terminal.
     val_loss, val_acc = model.evaluate(X_test, Y_test)
     print(f'loss: {val_loss}, acc: {val_acc}')
 
+    # Predicting the test set.
     model.predict(X_test)
     np.round(model.predict(X_test), 0)
 

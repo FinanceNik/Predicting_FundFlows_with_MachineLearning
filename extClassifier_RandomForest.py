@@ -1,11 +1,11 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from sklearn.model_selection import GridSearchCV
-import Statistics
-import DataSet_Cleaner as dsc
+import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
+from sklearn.model_selection import train_test_split  # train/test split
+from sklearn.preprocessing import MinMaxScaler  # scaling the data
+from sklearn.ensemble import RandomForestClassifier  # the model used
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report  # evaluating the model
+from sklearn.model_selection import GridSearchCV  # grid search cross validation for hyperparameter tuning
+import Statistics  # for visualizations
+import DataSet_Cleaner as dsc  # retrieving the correct dataset
 
 
 def random_forrest_extended_classification():
@@ -19,7 +19,7 @@ def random_forrest_extended_classification():
     df = dsc.ml_algo_selection('extended_classifier')  # Retrieving the dataset for the extended classification
 
     predictor = 'fund_flow'  # Again, predicting fund flows
-    drops = [predictor]
+    drops = [predictor]  # Dropping fund flow variable from the predictors set
 
     X = df.drop(drops, axis=1).values
     y = df[predictor].values
@@ -27,6 +27,7 @@ def random_forrest_extended_classification():
     # Splitting the training and the testing data to eliminate bias.
     X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=None)
 
+    # Scaling the data according to best practice.
     scaler = MinMaxScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
@@ -102,13 +103,5 @@ def random_forrest_extended_classification_hyperparameter_tuning():
 
     best_score = grid_search.best_score_
     print(best_score)
-    rf_best = grid_search.best_estimator_
-    importance = rf_best.feature_importances_
-
-    imp_df = pd.DataFrame({
-        "Varname": X_train.columns,
-        "Imp": importance
-    })
-    print(imp_df.sort_values(by="Imp", ascending=False))
 
 

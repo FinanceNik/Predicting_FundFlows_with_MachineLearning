@@ -11,7 +11,7 @@ A couple of steps have to be followed in order to get the application started.
 ---
 Prerequisites:
 ```
-- Have Python 3 installed, preferably Python 3.9
+- Have Python 3 installed, preferably Python 3.10
     - checkable in the terminal via:
     
         python3 --version

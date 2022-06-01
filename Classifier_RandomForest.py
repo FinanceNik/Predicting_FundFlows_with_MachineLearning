@@ -98,24 +98,17 @@ def random_forrest_hyperparameter_tuning():
         'n_estimators': [10, 25, 30, 50, 100, 200]
     }
 
+    # Calling the GridSearchCV function and fitting the model.
     grid_search = GridSearchCV(estimator=rf,
                                param_grid=params,
                                cv=4, verbose=1, scoring="accuracy")
 
+    # Fitting the data to the model.
     grid_search.fit(X_train, Y_train)
 
+    # Printing the best parameters.
     print(grid_search.best_params_)
     grid_predictions = grid_search.predict(X_test)
-
-    print(classification_report(Y_test, grid_predictions))
-
+    # Printing the best score of the model.
     best_score = grid_search.best_score_
     print(best_score)
-    rf_best = grid_search.best_estimator_
-    importance = rf_best.feature_importances_
-
-    imp_df = pd.DataFrame({
-        "Varname": X_train.columns,
-        "Imp": importance
-    })
-    print(imp_df.sort_values(by="Imp", ascending=False))

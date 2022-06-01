@@ -5,7 +5,7 @@ from sklearn.model_selection import GridSearchCV  # for hyperparameter tuning
 import DataSet_Cleaner as dsc  # including visualization functions that are coded in this module
 import numpy as np  # for higher math functions
 from sklearn import metrics  # evaluating the model
-import Statistics
+import Statistics  # for using the visualization functions coded in that module
 import os  # writing data to files through command line arguments
 
 

@@ -34,7 +34,7 @@ def get_fama_french_data():
     by using pandas datareader framework. In the end the dataset is returned as a dataframe object.
 
     """
-    import pandas_datareader.data as reader
+    import pandas_datareader.data as reader  # for reading html and web-based data.
 
     def transform_return_df():
         df_transposed = dsc.remove_many_nans()
@@ -61,10 +61,10 @@ def get_fama_french_data():
     df_fama = reader.DataReader('F-F_Research_Data_Factors', 'famafrench', start, end)[0]
     df = transform_return_df()
 
-    col_pops = ['Mkt-RF', 'SMB', 'HML', 'RF']
+    col_pops = ['Mkt-RF', 'SMB', 'HML', 'RF']  # the factors included in the 3-factor model
     for col in col_pops:
         col_popped = df_fama.pop(col)
-        df.insert(0, col, col_popped.values)
+        df.insert(0, col, col_popped.values)  # inserting the columns with the fama-french factors into the dataframe
 
     return df  # returning the dataframe with the fama-french factors
 
@@ -135,31 +135,31 @@ def create_alpha_and_beta_df():
 
     DESCRIPTION:
     --------------------------------------------------------------------------------------------------------------------
-    Creating two separate datasets for alpha and beta values in order to transform and insert them into the main data-
-    frame in another function later.
+    Creating two separate datasets for alpha and beta values in order to transform and insert them into the main
+    data-frame in another function later.
 
     """
     df_alpha = calculate_alpha_and_beta()
     df_alpha.drop(list(df_alpha.filter(regex='Unnamed')), axis=1, inplace=True)
     df_alpha.drop(list(df_alpha.filter(regex='beta')), axis=1, inplace=True)
 
-    df_alpha = df_alpha.fillna(0.0).T
+    df_alpha = df_alpha.fillna(0.0).T  # transpose the dataframe after filling the NaNs
 
     df_alpha.insert(0, 'Name', '')
     df_alpha['Name'] = df_alpha.index
-    df_alpha = df_alpha.reset_index()
+    df_alpha = df_alpha.reset_index()  # resetting the index
 
     df_beta = calculate_alpha_and_beta()
     df_beta.drop(list(df_beta.filter(regex='Unnamed')), axis=1, inplace=True)
     df_beta.drop(list(df_beta.filter(regex='alpha')), axis=1, inplace=True)
 
-    df_beta = df_beta.fillna(0.0).T
+    df_beta = df_beta.fillna(0.0).T  # transpose the dataframe after filling the NaNs
 
     df_beta.insert(0, 'Name', '')
     df_beta['Name'] = df_beta.index
-    df_beta = df_beta.reset_index()
+    df_beta = df_beta.reset_index()  # resetting the index
 
-    return df_alpha, df_beta
+    return df_alpha, df_beta  # returning both dataframe objects
 
 
 def transform_alpha_AND_beta():
@@ -172,31 +172,33 @@ def transform_alpha_AND_beta():
     """
     df = dsc.concat_maindf_and_expdf()  # the final panel dataset created in the DataSet_Cleaner module
     df_alpha = create_alpha_and_beta_df()[0]
-    df_alpha.drop(list(df_alpha.filter(regex='Unnamed')), axis=1, inplace=True)
-    df_alpha = df_alpha.iloc[::-1]
+    df_alpha.drop(list(df_alpha.filter(regex='Unnamed')), axis=1, inplace=True)  # dropping unnamed, empty column
+    df_alpha = df_alpha.iloc[::-1]  # reverse the dataset to fit the primary dataset
     df_alpha = df_alpha.reset_index()
     df_beta = create_alpha_and_beta_df()[1]
-    df_beta.drop(list(df_beta.filter(regex='Unnamed')), axis=1, inplace=True)
-    df_beta = df_beta.iloc[::-1]
+    df_beta.drop(list(df_beta.filter(regex='Unnamed')), axis=1, inplace=True)  # dropping unnamed, empty column
+    df_beta = df_beta.iloc[::-1]  # reverse the dataset to fit the primary dataset
     df_beta = df_beta.reset_index()
 
     list_cols_alpha = list(df_alpha.columns[1:])
 
+    # Converting the dataframe into panel data.
     df_alpha_final = pd.melt(frame=df_alpha[list_cols_alpha], id_vars=['Name'],
                              var_name="remove", value_name='monthly_alpha')
 
     list_cols_beta = list(df_beta.columns[1:])
 
+    # Converting the dataframe into panel data.
     df_beta_final = pd.melt(frame=df_beta[list_cols_beta], id_vars=['Name'],
                              var_name="remove", value_name='monthly_beta')
 
     monthly_alpha = df_alpha_final.pop('monthly_alpha')
-    df.insert(1, 'monthly_alpha', monthly_alpha)
+    df.insert(1, 'monthly_alpha', monthly_alpha)  # inserting the cleaned column
 
     monthly_beta = df_beta_final.pop('monthly_beta')
-    df.insert(1, 'monthly_beta', monthly_beta)
+    df.insert(1, 'monthly_beta', monthly_beta)  # inserting the cleaned column
 
-    return df
+    return df  # returning the final dataframe object
 
 
 def insert_factors():

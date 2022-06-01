@@ -210,20 +210,28 @@ def convert_to_panel_data():
     drops = df.loc[:, ~df.columns.isin(list_cols)]
     drops = list(drops.columns[:])
 
+    # The pandas built-in function that creates panel datasets.
     df_panel = pd.melt(frame=df, id_vars=drops, var_name="year-month", value_name='fund_flow')
 
+    # Extracting the year and month from the dataframe.
     year = df_panel["year-month"].str[42:46].astype(int)
     month = df_panel["year-month"].str[47:50].astype(int)
 
+    # Inserting the year and month into the dataframe.
     df_panel.insert(2, 'year', year)
     df_panel.insert(2, 'month', month)
 
+    # Dropping the Monthly Gross Return column as it is now converted into a panel dataset.
     df_panel.drop(list(df.filter(regex='Monthly Gross Return')), axis=1, inplace=True)
 
+    # Inserting the correct, converted column into the panel dataset.
     monthly_return = df_returns.pop('monthly_return')
     df_panel.insert(40, 'monthly_return', monthly_return)
 
+    # Saving the dataset for analysis.
     df_panel.to_csv('data/Morningstar_data_version_2.1.csv')
+
+    return df_panel
 
 
 def dummy_variables():
@@ -234,15 +242,15 @@ def dummy_variables():
     Convert the string variables 'Investment Area', 'Morningstar Category', 'Firm City' into dummy variables.
 
     """
-    df = pd.read_csv('data/Morningstar_data_version_2.1.csv')
-    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
-    df.drop(['year-month'], axis=1, inplace=True)
+    df = convert_to_panel_data()  # --> This is the panel dataset from the function above.
+    df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)  # Again, dropping the unnamed, empty column.
+    df.drop(['year-month'], axis=1, inplace=True)  # Drop the variable by which the data was converted into a panel.
 
-    dummy_list = ['Investment Area', 'Morningstar Category', 'Firm City']
+    dummy_list = ['Investment Area', 'Morningstar Category', 'Firm City']  # List of dummy variables to be converted.
 
-    df = pd.get_dummies(df, columns=dummy_list, drop_first=False)
+    df = pd.get_dummies(df, columns=dummy_list, drop_first=False)  # Convert the dummy variables.
 
-    return df
+    return df  # Return the dataframe.
 
 
 def convert_annual_expenses():
@@ -254,20 +262,22 @@ def convert_annual_expenses():
 
     """
     df = remove_many_nans()
-    df = df.reset_index()
+    df = df.reset_index()  # Resetting the index.
 
+    # Months in this dataset are not integers but string and hence the list was created from sting values.
     list_months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    # Years in this dataset are integers and hence we can use the list(range(x,y) combination to create a list of years.
     list_years = list(range(2000, 2022))
-    list_cols = ['Name']
+    list_cols = ['Name']  # The reference column that holds the fund names
     for year in list_years:
         col = f'Annual Report Net Expense Ratio \nYear{year}'
-        list_cols.append(col)
+        list_cols.append(col)  # Create a list of all the columns that hold annual expense data
 
     df_annum_exp = df[list_cols]
-    df_annum_exp = df_annum_exp.fillna(0.0)
+    df_annum_exp = df_annum_exp.fillna(0.0)  # when the fund was non-existing, the annual expense ratio was set to 0
     for year in list_years:
         for month in list_months:
-            df_annum_exp.insert(1, f"monthly_exp_ratio_{year}_{month}", "")
+            df_annum_exp.insert(1, f"monthly_exp_ratio_{year}_{month}", "")  # create a column for each month & year
 
     for i in range(len(df_annum_exp.index)):
         for year in list_years:
@@ -284,8 +294,10 @@ def convert_annual_expenses():
         for month in list_months:
             list_cols.append(f'monthly_exp_ratio_{year}_{month}')
 
+    # Convert the dataframe into a panel dataset.
     df_exp = pd.melt(frame=df_annum_exp[list_cols], id_vars=['Name'], var_name="year-month", value_name='monthly_exp')
 
+    # Again, drop the year-month column only used for the conversion.
     df_exp.drop(['year-month'], axis=1, inplace=True)
 
     return df_exp
@@ -301,7 +313,7 @@ def concat_maindf_and_expdf():
     practice of creating meaningful columns for the machine learning algorithms.
 
     """
-    df = dummy_variables()
+    df = dummy_variables()  # get the dataset will all variables converted into dummies.
     df_exp = convert_annual_expenses()
 
     monthly_exp = df_exp.pop('monthly_exp')
@@ -327,13 +339,14 @@ def ml_algo_selection(ml_type):
     The final, usable dataset for the corresponding algorithm is then returned to the algorithm functions.
 
     """
-    data = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
-    data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)
+    data = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')  # Retrieve the dataset
+    data.drop(list(data.filter(regex='Unnamed')), axis=1, inplace=True)  # Drop unnamed columns, dont have data
 
     # Removing the columns that were not convertable into dummy variables. Also dropping inception data here because
     # it is already converted into numeric categories as month and year.
-    data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)
+    data.drop(['Management Company', 'Name', 'Inception \nDate'], axis=1, inplace=True)  # String features removed
 
+    # Renaming all the column names since they are not lagged.
     data = data.rename(columns={'Manager \nTenure \n(Average)': 'Avg. Manager Tenure',
                                 'Manager \nTenure \n(Longest)': 'Max. Manager Tenure',
                                 'Net Assets \n- Average': 'Avg. Net Assets',
@@ -342,10 +355,11 @@ def ml_algo_selection(ml_type):
     for i, k in enumerate(list(data.columns[:])):
         data = data.rename(columns={list(data.columns[:])[i]: f'{list(data.columns[:])[i]} lagged'})
 
+    # The predicted variable of course is not lagged and hence it is re-renamed to just 'fund_flow'.
     data = data.rename(columns={'fund_flow lagged': 'fund_flow'})
 
     if ml_type == 'regression':
-        return data
+        return data  # this dataset does not have to be modified any further
 
     elif ml_type == 'classifier':
 
@@ -357,7 +371,7 @@ def ml_algo_selection(ml_type):
 
         data['fund_flow'] = data['fund_flow'].apply(ff_positive)
 
-        return data
+        return data  # returning the dataset that inherits the binary values for fund flows
 
     elif ml_type == 'extended_classifier':
 
@@ -367,9 +381,10 @@ def ml_algo_selection(ml_type):
         data = data[(data["fund_flow"] > -10_000_000)]
         data = data[(data["fund_flow"] != 0)]
 
-        min_ff = data['fund_flow'].min()
-        max_ff = data['fund_flow'].max()
+        min_ff = data['fund_flow'].min()  # minimum value of the fund flow included
+        max_ff = data['fund_flow'].max()  # maximum value of the fund flow included
 
+        # Function for the advanced classification into positive and negative classes as well as their magnitude.
         def categorize_ff(val):
             if val >= max_ff * 0.60:
                 return 10
@@ -416,7 +431,7 @@ def ml_algo_selection(ml_type):
 
         data['fund_flow'] = data['fund_flow'].apply(categorize_ff)
 
-        return data
+        return data  # returning the dataset that inherits the advanced classes for fund flows
 
 
 def reconvert_dummies():
@@ -424,13 +439,15 @@ def reconvert_dummies():
 
     DESCRIPTION:
     --------------------------------------------------------------------------------------------------------------------
-    Reconverting the dummy variables to numerically categorized ones for testing purposes, but in the end not used in
-    the analysis section as the proper way is to use dummy variables.
+    Reconverting the dummy variables to numerically categorized ones for visualization purposes. As it is too
+    difficult to visualize 200 variables, all the dummies are reconverted into classes and then mapped with their
+    respective value. Makes for better and more interpretable visualization.
 
     """
-    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')
+    df = pd.read_csv('data/Morningstar_data_version_5.0_lagged.csv')  # retrieving the dataset
     df.drop(list(df.filter(regex='Unnamed')), axis=1, inplace=True)
 
+    # Converting the Investment Area dummy variable.
     def convert_Investment_Area():
         col_type = 'Investment Area'
 
@@ -452,6 +469,7 @@ def reconvert_dummies():
 
         return df_ia
 
+    # Converting the Morningstar category dummy variable.
     def convert_Morningstar_Category():
         col_type = 'Morningstar Category'
 
@@ -473,6 +491,7 @@ def reconvert_dummies():
 
         return df_mc
 
+    # Converting the Firm City dummy variable.
     def convert_Firm_City():
         col_type = 'Firm City'
 
@@ -494,6 +513,7 @@ def reconvert_dummies():
 
         return df_fc
 
+    # Creating dataframes of the converted classes and inserting them into the primary dataset.
     df_ia = convert_Investment_Area()
     df_mc = convert_Morningstar_Category()
     df_fc = convert_Firm_City()
@@ -507,6 +527,7 @@ def reconvert_dummies():
     Firm_City = df_fc.pop('Firm City')
     df.insert(9, 'Firm City', Firm_City)
 
+    # Dropping all the dummy variable columns.
     df.drop(list(df.filter(regex='Investment Area_')), axis=1, inplace=True)
     df.drop(list(df.filter(regex='Morningstar Category_')), axis=1, inplace=True)
     df.drop(list(df.filter(regex='Firm City_')), axis=1, inplace=True)
